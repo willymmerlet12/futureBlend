@@ -7,7 +7,7 @@
   "source": "./src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js",
+    "start": "npx tsx example/imagine-ws.ts",
     "build": "tsc",
     "prettier": "prettier --write .",
     "prettier:check": "prettier --check ."
