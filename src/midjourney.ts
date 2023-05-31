@@ -38,7 +38,8 @@ export class Midjourney extends MidjourneyMessage {
       const speed = random(1000, 9999);
       prompt = `${prompt} --seed ${speed}`;
     }
-
+    console.log("here");
+  
     const nonce = nextNonce();
     this.log(`Imagine`, prompt, "nonce", nonce);
     const httpStatus = await this.ImagineApi(prompt, nonce);
@@ -54,6 +55,7 @@ export class Midjourney extends MidjourneyMessage {
       return msg;
     }
   }
+  
 
   // limit the number of concurrent interactions
   protected async safeIteractions(payload: any) {
@@ -139,6 +141,7 @@ export class Midjourney extends MidjourneyMessage {
     };
     return this.safeIteractions(payload);
   }
+  
 
   async Variation(
     content: string,
