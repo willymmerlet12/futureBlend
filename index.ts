@@ -69,10 +69,9 @@ app.post("/generate", async (req, res) => {
 
     try {
       // Call generateImage function passing the image URLs
-      console.log("akiiii");
+      console.log("akii");
       
       const msg = await generateImage(description, imageUrls);
-      res.status(200).json({ message: "Image generation started." });
       res.status(200).json({ message: "Image generated successfully.", msg });
     } catch (err) {
       res.status(500).send("Error generating the image.");
