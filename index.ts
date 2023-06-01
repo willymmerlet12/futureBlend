@@ -23,32 +23,31 @@ const client = new Midjourney({
 });
 
 async function generateImage(description: string, imageBuffer: string[]) {
-  try {
-    await client.init();
-    const prompt = `${imageBuffer[0]} ${imageBuffer[1]} ${description}`;
-    const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
-      console.log("loading", uri, "progress", progress);
-    });
-    console.log(msg);
-  } catch (err) {
-    throw new Error("Error generating the image: " + err);
-    console.log(err.message);
+    try {
+      await client.init();
+      const prompt = `${imageBuffer[0]} ${imageBuffer[1]} ${description}`;
+      const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
+        console.log("loading", uri, "progress", progress);
+      });
+      console.log(msg);
+    } catch (err) {
+      throw new Error("Error generating the image: " + err);
+      console.log(err.message);
+    }
   }
-}
 
 app.get("/", (req, res) => {
   res.render("index");
 });
 
 app.post("/generate", async (req, res) => {
-  uploadMiddleware(req, res, async (err) => {
+ /* uploadMiddleware(req, res, async (err) => {
     if (err) {
       res.status(400).send("Error uploading files.");
       return;
     }
 
-    const { description } = req.body;
-    const imageUrls: string[] = [];
+
 
     if (Array.isArray(req.files)) {
         for (let i = 0; i < req.files.length; i++) {
@@ -63,17 +62,23 @@ app.post("/generate", async (req, res) => {
       
 
     console.log(description);
-    console.log(imageUrls);
+    console.log(imageUrls); */
+
+    const { description } = req.body;
+    const imageUrls: string[] = [];
 
     try {
       // Call generateImage function passing the image URLs
+      console.log("akiiii");
+      
       const msg = await generateImage(description, imageUrls);
+      res.status(200).json({ message: "Image generation started." });
       res.status(200).json({ message: "Image generated successfully.", msg });
     } catch (err) {
       res.status(500).send("Error generating the image.");
       console.log(err.message);
     }
-  });
+ /* }); */
 });
 
 
