@@ -64,8 +64,7 @@ app.post("/generate", async (req, res) => {
     console.log(description);
     console.log(imageUrls); */
 
-    const { description } = req.body;
-    const imageUrls: string[] = [];
+    const { description, imageUrls } = req.body;
 
     try {
       // Call generateImage function passing the image URLs
