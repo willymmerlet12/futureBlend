@@ -1,11 +1,11 @@
-require("dotenv").config();
+import dotenv from 'dotenv'
+dotenv.config()
 import express from "express";
 import { Midjourney } from "../src";
 import bodyParser from "body-parser";
-import { promises as fs } from "fs";
 import multer from "multer";
 import { appli } from "../Utlis/config";
-import { ref, getDownloadURL, uploadBytesResumable, uploadBytes } from "firebase/storage";
+import { ref, getDownloadURL, uploadBytesResumable, uploadBytes} from "firebase/storage";
 
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
 const app = express();
@@ -50,14 +50,17 @@ app.post("/generate", async (req, res) => {
     const { description } = req.body;
     const imageUrls: string[] = [];
 
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
-      const fileRef = ref(appli.storage().ref(), `${file.fieldname}-${i}`);
-      const metadata = { contentType: 'image/jpeg' };
-      await uploadBytes(fileRef, file.buffer, metadata);
-      const downloadURL = await getDownloadURL(fileRef);
-      imageUrls.push(downloadURL);
+    if (Array.isArray(req.files)) {
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        const fileRef = ref(appli.storage().ref(), `${file.fieldname}-${i}`);
+        const metadata = { contentType: 'image/jpeg' };
+        await uploadBytes(fileRef, file.buffer, metadata);
+        const downloadURL = await getDownloadURL(fileRef);
+        imageUrls.push(downloadURL);
+      }
     }
+    
 
     console.log(description);
     console.log(imageUrls);

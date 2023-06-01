@@ -1,4 +1,5 @@
-import "dotenv/config";
+import dotenv from 'dotenv'
+dotenv.config()
 import { Midjourney } from "../src";
 /**
  *
@@ -28,8 +29,8 @@ async function main() {
   const msg2 = await client.Upscale(
     msg.content,
     2,
-    msg.id,
-    msg.hash,
+    msg.id!,
+    msg.hash!,
     (uri: string, progress: string) => {
       console.log("loading", uri, "progress", progress);
     }
