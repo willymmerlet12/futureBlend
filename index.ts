@@ -5,6 +5,7 @@ import express from "express";
 import { Midjourney } from "./src";
 import bodyParser from "body-parser";
 import multer from "multer";
+import { v4 as uuidv4 } from 'uuid';
 import { appli } from "./Utlis/config";
 import { ref, getDownloadURL, uploadBytesResumable, uploadBytes} from "firebase/storage";
 
@@ -23,7 +24,7 @@ const client = new Midjourney({
   Ws: true,
 });
 
-const imageResults: any[] = []
+const imageRequests = new Map();
 
 async function generateImage(description: string, imageBuffer: string[]): Promise<any> {
     try {
@@ -32,7 +33,6 @@ async function generateImage(description: string, imageBuffer: string[]): Promis
       const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
         console.log("loading", uri, "progress", progress);
       });
-      imageResults.push(msg);
       console.log(msg);
       return msg; // Return the response data
     } catch (err) {
@@ -40,35 +40,6 @@ async function generateImage(description: string, imageBuffer: string[]): Promis
       console.log(err.message);
     }
   }
-  
-
-/*async function generateImage(description: string, imageUrls: string[]): Promise<any> {
-  const url = 'https://futureblend.herokuapp.com/generate';
-  
-  const formData = new FormData();
-  formData.append('description', description);
-  
-  imageUrls.forEach((imageUrl, index) => {
-    formData.append(`image${index}`, imageUrl);
-  });
-  
-  try {
-    const response: AxiosResponse<any> = await axios.post(url, formData);
-    const responseData: any = response.data;
-    
-    // Additional processing
-    await client.init();
-    const prompt = `${imageUrls[0]} ${imageUrls[1]} ${description}`;
-    const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
-      console.log("loading", uri, "progress", progress);
-    });
-    console.log(responseData);
-    
-    return responseData;
-  } catch (error) {
-    throw new Error('Error generating the image.');
-  }
-} */
 
 
 app.get("/", (req, res) => {
@@ -76,7 +47,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/generate", async (req, res) => {
-  /* uploadMiddleware(req, res, async (err) => {
+  uploadMiddleware(req, res, async (err) => {
     if (err) {
       res.status(400).send("Error uploading files.");
       return;
@@ -98,35 +69,52 @@ app.post("/generate", async (req, res) => {
       
 
     console.log(description);
-    console.log(imageUrls); */
+    console.log(imageUrls);  
 
-    const { description, imageUrls } = req.body; 
+    /*const { description, imageUrls } = req.body; */
 
     try {
+
+        // Generate unique ID for the image generation request
+      const id = uuidv4();
+
+    // Store the image generation request in the map
+      imageRequests.set(id, { description, imageUrls });
       // Call generateImage function passing the image URLs
       console.log("akii");
       
       const msg = await generateImage(description, imageUrls);
+      imageRequests.delete(id);
       res.status(200).json({ message: "Image generated successfully.", msg });
     } catch (err) {
       res.status(500).send("Error generating the image.");
       console.log(err.message);
     }
- /* }); */
+ });
 });
 
-app.get("/result/:id", (req, res) => {
-    const { id } = req.params;
+app.get("/result/:id", async (req, res) => {
+    const id = req.params.id;
+    
+    // Check if the ID exists in the map
+    if (imageRequests.has(id)) {
+      // Get the image generation request associated with the ID
+      const { description, imageUrls } = imageRequests.get(id);
   
-    // Find the image result in the imageResults array based on the provided ID
-    const result = imageResults.find((result) => result.id === id);
+      try {
+        // Call generateImage function passing the image URLs
+        const result = await generateImage(description, imageUrls);
   
-    if (result) {
-      // If the image result is found, send it as the response
-      res.status(200).json(result);
+        // Remove the image generation request from the map
+        imageRequests.delete(id);
+  
+        res.status(200).json({ message: "Image generated successfully.", result });
+      } catch (err) {
+        res.status(500).send("Error generating the image.");
+        console.log(err.message);
+      }
     } else {
-      // If the image result is not found, send an error response
-      res.status(404).json({ message: "Image result not found." });
+      res.status(404).send("Image generation request not found.");
     }
   });
 
