@@ -23,6 +23,8 @@ const client = new Midjourney({
   Ws: true,
 });
 
+const imageResults: any[] = []
+
 async function generateImage(description: string, imageBuffer: string[]): Promise<any> {
     try {
       await client.init();
@@ -30,6 +32,7 @@ async function generateImage(description: string, imageBuffer: string[]): Promis
       const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
         console.log("loading", uri, "progress", progress);
       });
+      imageResults.push(msg);
       console.log(msg);
       return msg; // Return the response data
     } catch (err) {
@@ -111,6 +114,21 @@ app.post("/generate", async (req, res) => {
     }
  /* }); */
 });
+
+app.get("/result/:id", (req, res) => {
+    const { id } = req.params;
+  
+    // Find the image result in the imageResults array based on the provided ID
+    const result = imageResults.find((result) => result.id === id);
+  
+    if (result) {
+      // If the image result is found, send it as the response
+      res.status(200).json(result);
+    } else {
+      // If the image result is not found, send an error response
+      res.status(404).json({ message: "Image result not found." });
+    }
+  });
 
 
 
