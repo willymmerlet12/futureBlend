@@ -1,5 +1,6 @@
 import dotenv from 'dotenv'
 dotenv.config()
+import axios, { AxiosResponse } from 'axios';
 import express from "express";
 import { Midjourney } from "./src";
 import bodyParser from "body-parser";
@@ -22,7 +23,7 @@ const client = new Midjourney({
   Ws: true,
 });
 
-async function generateImage(description: string, imageBuffer: string[]) {
+async function generateImage(description: string, imageBuffer: string[]): Promise<any> {
     try {
       await client.init();
       const prompt = `${imageBuffer[0]} ${imageBuffer[1]} ${description}`;
@@ -30,24 +31,56 @@ async function generateImage(description: string, imageBuffer: string[]) {
         console.log("loading", uri, "progress", progress);
       });
       console.log(msg);
+      return msg; // Return the response data
     } catch (err) {
       throw new Error("Error generating the image: " + err);
       console.log(err.message);
     }
   }
+  
+
+/*async function generateImage(description: string, imageUrls: string[]): Promise<any> {
+  const url = 'https://futureblend.herokuapp.com/generate';
+  
+  const formData = new FormData();
+  formData.append('description', description);
+  
+  imageUrls.forEach((imageUrl, index) => {
+    formData.append(`image${index}`, imageUrl);
+  });
+  
+  try {
+    const response: AxiosResponse<any> = await axios.post(url, formData);
+    const responseData: any = response.data;
+    
+    // Additional processing
+    await client.init();
+    const prompt = `${imageUrls[0]} ${imageUrls[1]} ${description}`;
+    const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
+      console.log("loading", uri, "progress", progress);
+    });
+    console.log(responseData);
+    
+    return responseData;
+  } catch (error) {
+    throw new Error('Error generating the image.');
+  }
+} */
+
 
 app.get("/", (req, res) => {
   res.render("index");
 });
 
 app.post("/generate", async (req, res) => {
- /* uploadMiddleware(req, res, async (err) => {
+  /* uploadMiddleware(req, res, async (err) => {
     if (err) {
       res.status(400).send("Error uploading files.");
       return;
     }
 
-
+    const { description } = req.body;
+    const imageUrls: string[] = [];
 
     if (Array.isArray(req.files)) {
         for (let i = 0; i < req.files.length; i++) {
@@ -64,7 +97,7 @@ app.post("/generate", async (req, res) => {
     console.log(description);
     console.log(imageUrls); */
 
-    const { description, imageUrls } = req.body;
+    const { description, imageUrls } = req.body; 
 
     try {
       // Call generateImage function passing the image URLs
