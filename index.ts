@@ -47,7 +47,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/generate", async (req, res) => {
-  uploadMiddleware(req, res, async (err) => {
+ /* uploadMiddleware(req, res, async (err) => {
     if (err) {
       res.status(400).send("Error uploading files.");
       return;
@@ -69,13 +69,13 @@ app.post("/generate", async (req, res) => {
       
 
     console.log(description);
-    console.log(imageUrls);  
+    console.log(imageUrls);  */
 
-    /*const { description, imageUrls } = req.body; */
+    const { description, imageUrls } = req.body; 
 
     try {
 
-        // Generate unique ID for the image generation request
+    // Generate unique ID for the image generation request
       const id = uuidv4();
 
     // Store the image generation request in the map
@@ -90,7 +90,7 @@ app.post("/generate", async (req, res) => {
       res.status(500).send("Error generating the image.");
       console.log(err.message);
     }
- });
+ /*});*/
 });
 
 app.get("/result/:id", async (req, res) => {
