@@ -25,6 +25,7 @@ const client = new Midjourney({
 });
 
 const imageRequests = new Map();
+let storedMsg: any[] = []
 
 async function generateImage(description: string, imageBuffer: string[]): Promise<any> {
     try {
@@ -33,6 +34,7 @@ async function generateImage(description: string, imageBuffer: string[]): Promis
       const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
         console.log("loading", uri, "progress", progress);
       });
+      storedMsg.push(msg)
       console.log(msg);
       return msg; // Return the response data
     } catch (err) {
@@ -45,6 +47,14 @@ async function generateImage(description: string, imageBuffer: string[]): Promis
 app.get("/", (req, res) => {
   res.render("index");
 });
+
+app.get("/get-msg", (req, res) => {
+    if (storedMsg) {
+      res.status(200).json({ msg: storedMsg });
+    } else {
+      res.status(404).json({ message: "Msg not found." });
+    }
+  });
 
 app.post("/generate", async (req, res) => {
  /* uploadMiddleware(req, res, async (err) => {
@@ -77,6 +87,7 @@ app.post("/generate", async (req, res) => {
 
     // Generate unique ID for the image generation request
       const id = uuidv4();
+      const imageResults: any[] = []
 
     // Store the image generation request in the map
       imageRequests.set(id, { description, imageUrls });
