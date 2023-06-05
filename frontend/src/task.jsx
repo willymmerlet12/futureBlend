@@ -60,21 +60,6 @@ const handleGenderChange = (event) => {
             // Handle the error or display an error message
           }
     };
-      
-    const fetchData = async(token)=>{
-      const response = await axios.get('http://localhost:3000/',{
-          headers:{
-              'Authorization': `Bearer ${token}`
-          }
-      });
-      setTasks(response.data.tasks)
-      console.log(response.data);
-    }
-    useEffect(()=>{
-     if(token){
-      fetchData(token);
-     }
-    },[]);
   
   
     return (
@@ -88,7 +73,7 @@ const handleGenderChange = (event) => {
             <li>Embrace Good Lighting: Adequate lighting plays a crucial role in enhancing the quality of the generated images.</li>
             </ul>
      
-        <form enctype="multipart/form-data">
+        <form enctype="multipart/form-data" onSubmit={handleSubmit}>
             <h3>1. Upload pictures</h3>
       <input type="file" id="images" name="images" multiple onChange={handleChange} />
       {previews.map((preview, index) => (
@@ -101,7 +86,7 @@ const handleGenderChange = (event) => {
        <option value="boy">Boy</option>
        <option value="girl">Girl</option>
      </select>
-      <button type="submit" onSubmit={handleSubmit}>Generate Image</button>
+      <button type="submit">Generate Image</button>
         </form>
       </div>
       </>
