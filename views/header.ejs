@@ -1,0 +1,44 @@
+<!-- header.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= title %></title>
+  <style>
+    /* Add your CSS styles here */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      background-color: #11363e;
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .login-button {
+      padding: 10px 20px;
+      background-color: #ddd;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <!-- Add your logo here -->
+      <img src="/./img/futureblendlogo.png" alt="Logo">
+    </div>
+    <div class="title">
+      <%= title %>
+    </div>
+    <div class="login-button">
+      <a href="/login">Login</a>
+    </div>
+  </header>
+</body>
+</html>

@@ -1,0 +1,300 @@
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #0a141e;
+    width: 100%;
+    height: 100px;
+  }
+
+  header h2 {
+    color: white;
+    font-weight: bold;
+  }
+
+  .logo {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .logo h2 {
+    padding-top: 30px;
+  }
+  
+  .logo img {
+    font-size: 24px;
+    height: 100px;
+    font-weight: bold;
+  }
+  .buttons {
+    display: flex;
+    flex-direction: row;
+  }
+  header .credits-button {
+    display: flex;
+    justify-content: center;
+    padding: 10px 20px;
+    background-color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 40px;
+    color: black;
+    height: 40px;
+    width: 150px;
+    font-weight: bold;
+    font-size: 17px;
+  }
+  header .login-button {
+    display: flex;
+    justify-content: center;
+    padding: 10px 20px;
+    background-color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 40px;
+    color: black;
+    width: 150px;
+    font-weight: bold;
+    font-size: 17px;
+  }
+
+  * {
+    margin: 0;
+}
+
+h1, h2, h3, h4, p, span, ul, li, a {
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
+}
+/* FORM */
+.App {
+    width: 75%;
+    margin: 0 auto;
+}
+.App section {
+    display: flex;
+    flex-direction: row;
+    margin-top: 80px;
+
+}
+.App section .text-section p {
+    line-height: 2rem;
+    margin-bottom: 20px;
+}
+.App section .text-section {
+display: flex;
+flex-direction: column;
+width: 50%;
+}
+
+.App section .text-section h3 {
+    font-size: 35px;
+    margin-bottom: 10px;
+}
+
+.App section .text-section button {
+    background-color:#0a141e;
+    color:white;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 27%;
+    height: 45px;
+    border: none;
+    font-size: 18px;
+}
+.App section .img-section {
+    width: 50%;
+    margin-left: 20px;
+}
+.App section .img-section img {
+width: 450px;
+height: 300px;
+}
+body {
+    font-family: Arial, sans-serif;
+  }
+
+  h1 {
+    color: #333;
+  }
+
+  form {
+    margin: 20px;
+    padding: 20px;
+    border-radius: 5px;
+  }
+
+  form h3 {
+    font-size: 24px;
+    margin-bottom: 25px;
+  }
+
+  form input {
+    width: 60%;
+    height: 50px;
+    border: 1px solid #0a141e;
+  }
+  form .preview {
+    display: flex;
+    flex-direction: row;
+  }
+
+  form .preview-pics {
+    margin-bottom: 30px;
+  }
+  .gender {
+    margin-top: 30px;
+  }
+  form .preview img {
+    width: 20%;
+    height: auto;
+    margin-right: 10px; 
+    margin-bottom: 10px; 
+  }
+  input[type="text"],
+  input[type="file"] {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+    border-radius: 3px;
+  }
+
+  button[type="submit"] {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  button[type="submit"]:hover {
+    background-color: #0056b3;
+  }
+.about {
+    width: 70%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column !important;
+}
+  .about h3 {
+    font-size: 35px;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .about h5 {
+font-size: 18px;
+font-weight: 300;
+line-height: 30px;
+margin-bottom: 10px;
+  }
+
+  .info-about {
+    display: flex;
+    flex-direction: row;
+    font-size: 14px;
+    margin: 20px;
+  }
+
+  .info-about .highlight {
+   margin-right: 15px;
+  }
+  .wrap-info {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .wrap-info .info-about {
+    width: 45%;
+  }
+  .howitworks {
+    width: 70%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column !important;
+}
+  .howitworks h3 {
+    font-size: 35px;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .howitworks h5 {
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 30px;
+    margin-bottom: 10px;
+}
+.start-button .start {
+    margin-top: 50px;
+    text-align: center;
+}
+.start {
+   
+    display: block;
+    margin: 0 auto;
+    width: 250px;
+    height: 45px;
+    cursor: pointer;
+    font-size: 16px;
+    border: none;
+    border-radius: 14px;
+    background-color: #0a141e;
+    color: white;
+}
+
+footer {
+    margin-top: 80px;
+    width: 100%;
+    height: 200px;
+    background-color: #0a141e;
+    color: white;
+    
+}
+.footer-section {
+    width: 80%;
+    margin: 0 auto;
+    padding-top: 30px;
+    display: flex;
+    justify-content: space-between;
+}
+footer p {
+    margin-bottom: 20px;
+}
+footer ul {
+    list-style: none;
+    display: flex;
+    flex-direction: row;
+}
+footer li {
+    padding-right: 20px;
+}
+footer .terms {
+    display: flex;
+    flex-direction: row;
+}
+
+.generate {
+    padding-top: 50px;
+    width: 50%;
+    margin: 0 auto;
+}
+.generate h1 {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.generate h2 {
+    font-size: 16px;
+    color: gray;
+    margin-bottom: 25px;
+}
+.generate ul {
+    margin-left: 10px;
+}
+.generate li {
+    padding-bottom: 15px;
+    color: black;
+    font-size: 14px;
+}

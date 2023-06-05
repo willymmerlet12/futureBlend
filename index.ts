@@ -1,19 +1,25 @@
 import dotenv from 'dotenv'
 dotenv.config()
-import axios, { AxiosResponse } from 'axios';
+import firebase from 'firebase-admin';
 import express from "express";
 import { Midjourney } from "./src";
 import bodyParser from "body-parser";
 import multer from "multer";
 import { v4 as uuidv4 } from 'uuid';
+import authMiddleware from "./auth-middleware";
+import cors from "cors";
+import serviceAccount from "./credentials.json"
 import { appli } from "./Utlis/config";
 import { ref, getDownloadURL, uploadBytesResumable, uploadBytes} from "firebase/storage";
-
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors());
 app.set("view engine", "ejs");
+
+app.use(authMiddleware.decodeToken);
+
 
 const client = new Midjourney({
   ServerId: process.env.SERVER_ID || "1091356628743360562",
@@ -30,7 +36,7 @@ let storedMsg: any[] = []
 async function generateImage(description: string, imageBuffer: string[]): Promise<any> {
     try {
       await client.init();
-      const prompt = `${imageBuffer[0]} ${imageBuffer[1]} ${description}`;
+      const prompt = `${imageBuffer[0]} ${imageBuffer[1]} "the future ${description} of those 2 persons. Ultra realistic, HD, 4K -testp"`;
       const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
         console.log("loading", uri, "progress", progress);
       });
@@ -57,7 +63,7 @@ app.get("/get-msg", (req, res) => {
   });
 
 app.post("/generate", async (req, res) => {
- /* uploadMiddleware(req, res, async (err) => {
+  uploadMiddleware(req, res, async (err) => {
     if (err) {
       res.status(400).send("Error uploading files.");
       return;
@@ -79,9 +85,9 @@ app.post("/generate", async (req, res) => {
       
 
     console.log(description);
-    console.log(imageUrls);  */
+    console.log(imageUrls);  
 
-    const { description, imageUrls } = req.body; 
+  /*  const { description, imageUrls } = req.body; */
 
     try {
 
@@ -101,7 +107,7 @@ app.post("/generate", async (req, res) => {
       res.status(500).send("Error generating the image.");
       console.log(err.message);
     }
- /*});*/
+ });
 });
 
 app.get("/result/:id", async (req, res) => {
@@ -128,7 +134,6 @@ app.get("/result/:id", async (req, res) => {
       res.status(404).send("Image generation request not found.");
     }
   });
-
 
 
 
