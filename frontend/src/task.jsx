@@ -50,6 +50,7 @@ const handleGenderChange = (event) => {
             const response = await axios.post('https://futureblend.herokuapp.com/generate', formData, {
               headers: {
                 'Content-Type': 'multipart/form-data',
+                Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
               },
             });
       

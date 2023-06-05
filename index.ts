@@ -8,6 +8,7 @@ import multer from "multer";
 import { v4 as uuidv4 } from 'uuid';
 import authMiddleware from "./auth-middleware";
 import cors from "cors";
+import jwt from "jsonwebtoken";
 import serviceAccount from "./credentials.json"
 import { appli } from "./Utlis/config";
 import { ref, getDownloadURL, uploadBytesResumable, uploadBytes} from "firebase/storage";
@@ -27,6 +28,9 @@ app.set("view engine", "ejs");
 
 app.use(authMiddleware.decodeToken);
 
+const payload = { userId: '4526821' };
+const secretKey = 'letssee';
+const token = jwt.sign(payload, secretKey);
 
 const client = new Midjourney({
   ServerId: process.env.SERVER_ID || "1091356628743360562",
@@ -70,6 +74,22 @@ app.get("/get-msg", (req, res) => {
   });
 
 app.post("/generate", async (req, res) => {
+
+    if (!req.headers.authorization) {
+        res.status(401).send("Unauthorized");
+        return;
+      }
+    
+      // Retrieve the authorization token from the header
+      const authToken = req.headers.authorization;
+    // Validate the access token
+  const accessToken = authToken.split(' ')[1]; // Extract the token from the Authorization header
+  const decodedToken = jwt.verify(accessToken, token);
+
+  if (!decodedToken) {
+    return res.status(401).send('Unauthorized');
+  }
+
   uploadMiddleware(req, res, async (err) => {
     if (err) {
       res.status(400).send("Error uploading files.");
