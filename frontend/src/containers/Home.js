@@ -9,6 +9,9 @@ import {
   faComputer,
   faImage,
   faSquarePollHorizontal,
+  faLayerGroup,
+  faSplotch,
+  faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -18,7 +21,10 @@ library.add(
   faUpload,
   faComputer,
   faImage,
-  faSquarePollHorizontal
+  faSquarePollHorizontal,
+  faLayerGroup,
+  faSplotch,
+  faUser
 );
 
 const Home = () => {
@@ -41,8 +47,10 @@ const Home = () => {
               potential future children, offering a glimpse into what your
               family could look like.
             </p>
-            <div className="get-started"></div>
-            <button>Get started</button>
+
+            <Link to="/generate">
+              <button>Get started</button>
+            </Link>
           </div>
           <div className="img-section">
             <img src={Template} alt="" />
@@ -59,11 +67,8 @@ const Home = () => {
           <div className="wrap-info">
             <div className="info-about">
               <div className="icon">
-                <span class="fa-2x">
-                  <FontAwesomeIcon
-                    icon={faArrowUpFromBracket}
-                    className="highlight"
-                  />
+                <span className="fa-2x">
+                  <FontAwesomeIcon icon={faLayerGroup} className="highlight" />
                 </span>
               </div>
               <h5>
@@ -93,15 +98,12 @@ const Home = () => {
             </div>
             <div className="info-about">
               <div className="icon">
-                <span class="fa-2x">
-                  <FontAwesomeIcon
-                    icon={faArrowUpFromBracket}
-                    className="highlight"
-                  />
+                <span className="fa-2x">
+                  <FontAwesomeIcon icon={faSplotch} className="highlight" />
                 </span>
               </div>
               <h5>
-                <b> Fun and Entertainment</b> Our tool adds an element of fun
+                <b> Fun and Entertainment:</b> Our tool adds an element of fun
                 and entertainment to your relationship journey. It allows you
                 and your partner to engage in a playful exploration of your
                 future possibilities and creates memorable moments of
@@ -110,11 +112,8 @@ const Home = () => {
             </div>
             <div className="info-about">
               <div className="icon">
-                <span class="fa-2x">
-                  <FontAwesomeIcon
-                    icon={faArrowUpFromBracket}
-                    className="highlight"
-                  />
+                <span className="fa-2x">
+                  <FontAwesomeIcon icon={faUser} className="highlight" />
                 </span>
               </div>
               <h5>
@@ -132,7 +131,7 @@ const Home = () => {
           <div className="wrap-info">
             <div className="info-about">
               <div className="icon">
-                <span class="fa-2x">
+                <span className="fa-2x">
                   <FontAwesomeIcon icon={faUpload} className="highlight" />
                 </span>
               </div>
@@ -144,7 +143,7 @@ const Home = () => {
             </div>
             <div className="info-about">
               <div className="icon">
-                <span class="fa-2x">
+                <span className="fa-2x">
                   <FontAwesomeIcon icon={faComputer} className="highlight" />
                 </span>
               </div>
@@ -157,7 +156,7 @@ const Home = () => {
             </div>
             <div className="info-about">
               <div className="icon">
-                <span class="fa-2x">
+                <span className="fa-2x">
                   <FontAwesomeIcon icon={faImage} className="highlight" />
                 </span>
               </div>
@@ -170,7 +169,7 @@ const Home = () => {
             </div>
             <div className="info-about">
               <div className="icon">
-                <span class="fa-2x">
+                <span className="fa-2x">
                   <FontAwesomeIcon
                     icon={faSquarePollHorizontal}
                     className="highlight"

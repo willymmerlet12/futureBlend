@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -6,14 +7,20 @@ const Footer = () => {
       <footer>
         <div className="footer-section">
           <div className="copyright">
-            <p>copyright</p>
-            <p>contact</p>
+            <p>© 2023 WMer Solutions, LLC</p>
+            <p>sneakit12@gmail.com</p>
           </div>
           <div className="terms">
             <ul>
-              <li>Privacy Policy</li>
-              <li>Terms of Use</li>
-              <li>Cookies Preferences</li>
+              <Link to="/privacy-policy">
+                <li>Privacy Policy</li>
+              </Link>
+              <Link to="terms-of-use">
+                <li>Terms of Use</li>
+              </Link>
+              <Link to="/cookies">
+                <li>Cookies Preferences</li>
+              </Link>
             </ul>
           </div>
         </div>
