@@ -11,6 +11,7 @@ import {
   getAuth,
   signInWithPopup,
   signOut,
+  signInWithRedirect,
 } from "firebase/auth";
 import { app } from "../config/firebaseauth";
 import { useNavigate } from "react-router-dom";
@@ -35,36 +36,68 @@ const Header = ({ credits, setCredits }) => {
   };
 
   function signInwithGoogle() {
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        // This gives you a Google Access Token. You can use it to access the Google API.
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential.accessToken;
-        console.log(token);
-        // The signed-in user info.
-        const user = result.user;
-        if (user) {
-          user.getIdToken().then((tkn) => {
-            // set access token in session storage
-            console.log("here");
-            console.log(tkn);
-            sessionStorage.setItem("accessToken", tkn);
-            setAuthorizedUser(true);
-          });
-        }
-        setAuthorizedUser(true);
-        navigate("/");
-        console.log(user);
-      })
-      .catch((error) => {
-        // Handle Errors here.
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // The email of the user's account used.
-        const email = error.customData.email;
-        // The AuthCredential type that was used.
-        const credential = GoogleAuthProvider.credentialFromError(error);
-      });
+    const isDesktop = /Mac|Windows|(Linux)|(X11)/.test(navigator.userAgent);
+    if (isDesktop) {
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          // This gives you a Google Access Token. You can use it to access the Google API.
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          const token = credential.accessToken;
+          console.log(token);
+          // The signed-in user info.
+          const user = result.user;
+          if (user) {
+            user.getIdToken().then((tkn) => {
+              // set access token in session storage
+              console.log("here");
+              console.log(tkn);
+              sessionStorage.setItem("accessToken", tkn);
+              setAuthorizedUser(true);
+            });
+          }
+          setAuthorizedUser(true);
+          navigate("/");
+          console.log(user);
+        })
+        .catch((error) => {
+          // Handle Errors here.
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          // The email of the user's account used.
+          const email = error.customData.email;
+          // The AuthCredential type that was used.
+          const credential = GoogleAuthProvider.credentialFromError(error);
+        });
+    } else {
+      signInWithRedirect(auth, provider)
+        .then(() => {
+          const result = auth.getRedirectResult();
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          const token = credential.accessToken;
+          console.log(token);
+          const user = result.user;
+          if (user) {
+            user.getIdToken().then((tkn) => {
+              console.log("here");
+              console.log(tkn);
+              sessionStorage.setItem("accessToken", tkn);
+              setAuthorizedUser(true);
+            });
+          }
+          setAuthorizedUser(true);
+          navigate("/");
+          console.log(user);
+        })
+        .catch((error) => {
+          // Handle Errors here.
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          // The email of the user's account used.
+          const email = error.customData.email;
+          // The AuthCredential type that was used.
+          const credential = GoogleAuthProvider.credentialFromError(error);
+        });
+    }
   }
 
   function logoutUser() {

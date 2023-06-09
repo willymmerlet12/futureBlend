@@ -14,6 +14,7 @@ import {
   faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Helmet } from "react-helmet";
 
 library.add(
   faArrowUpFromBracket,
@@ -34,6 +35,19 @@ const Home = () => {
 
   return (
     <div className="App">
+      <Helmet>
+        ‍
+        <title>
+          Future Blend AI - Generate Realistic Images of Your Potential
+          Offspring
+        </title>
+        <meta
+          name="description"
+          content="Visualize the Future: Generate Realistic Images of Your Potential
+          Offspring with Future Blend AI."
+        />
+        <link rel="canonical" href="http://futureblendai.com/" />
+      </Helmet>
       <>
         <section>
           <div className="text-section">

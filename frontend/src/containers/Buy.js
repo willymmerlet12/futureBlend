@@ -6,7 +6,7 @@ import token1 from "../img/token2.png";
 import token2 from "../img/token3.png";
 
 const stripePromise = loadStripe(
-  "pk_test_51NGmWwDI1bwWeEay9Md5LmaSVNS6RugBqKcxK8WxKvlar77yXUAJmTMFzP7aB6VOvfad3qJoDdB0X0Z6Lwl2MWvF00vUFR4WAh"
+  "pk_live_51NGmWwDI1bwWeEay08ePMQavGqJMbMbJYFeWMxreO32aJ1HRK62muH2FhIXnMzVYSYPiTRCAxWWtO9lzbuic3j8F00lKIzpFur"
 );
 const db = app.auth();
 const db1 = app.firestore();
@@ -18,7 +18,7 @@ const Buy = () => {
       const stripe = await stripePromise;
 
       const response = await fetch(
-        "http://localhost:3001/create-checkout-session",
+        "https://futureblend.herokuapp.com/create-checkout-session",
         {
           method: "POST",
           headers: {
@@ -34,8 +34,8 @@ const Buy = () => {
       const result = await stripe.redirectToCheckout({
         sessionId: session.id,
         lineItems: [{ price: priceId, quantity: 1 }],
-        successUrl: `http://localhost:3000/`,
-        cancelUrl: "http://localhost:3000/cancel",
+        successUrl: `https://futureblend.herokuapp.com/`,
+        cancelUrl: "https://futureblend.herokuapp.com/",
         mode: "payment",
       });
 
@@ -64,11 +64,11 @@ const Buy = () => {
       <section className="creds">
         <div className="creds-div">
           <img className="creds-image" src={token} alt="FutureBlend credit" />
-          <p className="creds-content">$0.20 per image</p>
+          <p className="creds-content">$0.60 per image</p>
           <button
-            onClick={() => handleCheckout("price_1NGnznDI1bwWeEayMnKermYo")}
+            onClick={() => handleCheckout("price_1NHCeaDI1bwWeEays9buan4Q")}
           >
-            BUY FOR $5
+            BUY FOR $3
           </button>
         </div>
         <div className="creds-div">
@@ -77,11 +77,11 @@ const Buy = () => {
             src={token2}
             alt="FutureBlend credit image2"
           />
-          <p className="creds-content">$0.18 per image</p>
+          <p className="creds-content">$0.50 per image</p>
           <button
-            onClick={() => handleCheckout("price_1NGo0QDI1bwWeEayilmBZAPk")}
+            onClick={() => handleCheckout("price_1NHCdjDI1bwWeEayNsfZ8mPz")}
           >
-            BUY FOR $9
+            BUY FOR $5
           </button>
         </div>
         <div className="creds-div">
@@ -90,11 +90,11 @@ const Buy = () => {
             src={token1}
             alt="FutureBlend credit image3"
           />
-          <p className="creds-content">$0.17 per image</p>
+          <p className="creds-content">$0.40 per image</p>
           <button
-            onClick={() => handleCheckout("price_1NGo10DI1bwWeEay7SgQQYAm")}
+            onClick={() => handleCheckout("price_1NHCeaDI1bwWeEays9buan4Q")}
           >
-            BUY FOR $17
+            BUY FOR $10
           </button>
         </div>
       </section>
