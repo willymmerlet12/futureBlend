@@ -34,7 +34,7 @@ const Buy = () => {
       const result = await stripe.redirectToCheckout({
         sessionId: session.id,
         lineItems: [{ price: priceId, quantity: 1 }],
-        successUrl: `http://localhost:3000/success?priceId=${priceId}`,
+        successUrl: `http://localhost:3000/`,
         cancelUrl: "http://localhost:3000/cancel",
         mode: "payment",
       });
