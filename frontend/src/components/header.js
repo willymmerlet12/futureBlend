@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Logo from "../img/futureblendlogo.png";
 import Popup from "reactjs-popup";
-import Menu from "../Menu";
+import MobileDetect from "mobile-detect";
 import Menuu from "../Menuu";
 import BurgerIcon from "../BurgerIcon";
 import "../config/firebase-config";
@@ -11,7 +11,7 @@ import {
   getAuth,
   signInWithPopup,
   signOut,
-  signInWithRedirect,
+  signInWithCredential,
 } from "firebase/auth";
 import { app } from "../config/firebaseauth";
 import { useNavigate } from "react-router-dom";
@@ -36,8 +36,12 @@ const Header = ({ credits, setCredits }) => {
   };
 
   function signInwithGoogle() {
+    const md = new MobileDetect(window.navigator.userAgent);
+    console.log(md);
+    const isMobile = md.mobile() !== null;
     const isDesktop = /Mac|Windows|(Linux)|(X11)/.test(navigator.userAgent);
-    if (isDesktop) {
+    if (!isMobile) {
+      console.log("desktop");
       signInWithPopup(auth, provider)
         .then((result) => {
           // This gives you a Google Access Token. You can use it to access the Google API.
@@ -69,9 +73,8 @@ const Header = ({ credits, setCredits }) => {
           const credential = GoogleAuthProvider.credentialFromError(error);
         });
     } else {
-      signInWithRedirect(auth, provider)
-        .then(() => {
-          const result = auth.getRedirectResult();
+      signInWithCredential(auth, provider)
+        .then((result) => {
           const credential = GoogleAuthProvider.credentialFromResult(result);
           const token = credential.accessToken;
           console.log(token);
@@ -119,9 +122,7 @@ const Header = ({ credits, setCredits }) => {
     const fetchCredits = async () => {
       try {
         const user = auth.currentUser;
-        console.log("user", user);
         if (user) {
-          console.log("aki");
           const userSnapshot = await db.collection("users").doc(user.uid).get();
           if (userSnapshot.exists) {
             const userData = userSnapshot.data();

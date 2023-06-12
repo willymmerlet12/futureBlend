@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Template from "../img/exampleTemplate.png";
 import { Link } from "react-router-dom";
 import { library } from "@fortawesome/fontawesome-svg-core";
@@ -29,10 +29,6 @@ library.add(
 );
 
 const Home = () => {
-  const [authorizedUser, setAuthorizedUser] = useState(
-    false || sessionStorage.getItem("accessToken")
-  );
-
   return (
     <div className="App">
       <Helmet>
@@ -95,7 +91,7 @@ const Home = () => {
             </div>
             <div className="info-about">
               <div className="icon">
-                <span class="fa-2x">
+                <span className="fa-2x">
                   <FontAwesomeIcon
                     icon={faArrowUpFromBracket}
                     className="highlight"

@@ -93,11 +93,11 @@ const Menu = ({ close, authorizedUser, setAuthorizedUser, credits }) => {
             </li>
           </div>
         ) : (
-          <li onClick={close}>
-            <Link to="/" onClick={signInwithGoogle}>
-              LOGIN
-            </Link>
-          </li>
+          <div>
+            <button className="log" onClick={signInwithGoogle}>
+              LOG IN
+            </button>
+          </div>
         )}
       </ul>
     </div>

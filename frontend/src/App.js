@@ -29,7 +29,10 @@ function App() {
         <Route path="/cancel" element={<Cancel />} />
         <Route path="/success" element={<Success />} />
         <Route path="/buy" element={<Buy />} />
-        <Route path="/results" element={<Results />} />
+        <Route
+          path="/results"
+          element={<Results credits={credits} setCredits={setCredits} />}
+        />
         <Route
           path="/generate"
           element={<Generate credits={credits} setCredits={setCredits} />}

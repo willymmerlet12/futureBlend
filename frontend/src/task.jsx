@@ -1,19 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
-import { app} from "./config/firebaseauth";
-import { getAuth} from "firebase/auth"
 
-const db = app.firestore()
 
 export default function Tasks({ token, credits, setCredits }) {
   const [previews, setPreviews] = useState([]);
   const [gender, setGender] = useState('boy');
+  const [error, setError] = useState(false)
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([])
   const [filesToSend, setFilesToSend] = useState([]);
   const navigate = useNavigate();
-  const auth = getAuth();
 
   const handleGenderChange = (event) => {
     const selectedGender = event.target.value;
@@ -45,35 +42,48 @@ export default function Tasks({ token, credits, setCredits }) {
     setFilesToSend(filesToSend);
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    console.log("submit in progress");
-    const formData = new FormData();
-    formData.append('description', gender);
-    for (let i = 0; i < filesToSend.length; i++) {
-      formData.append('images', filesToSend[i]);
-    }
+const handleSubmit = async (event) => {
+  event.preventDefault();
+  console.log("submit in progress");
+  const formData = new FormData();
+  formData.append('description', gender);
+  for (let i = 0; i < filesToSend.length; i++) {
+    formData.append('images', filesToSend[i]);
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const response = await axios.post('https://futureblend.herokuapp.com/generate', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("response", response);
+    const response = await axios.post('https://futureblend.herokuapp.com/generate', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log("response", response);
 
-      const { message, msg } = response.data;
+    const { message, msg } = response.data;
 
-      fetchResults()
-    } catch (error) {
-      console.error('Error generating the image:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchResults();
+
+   /* // Redirect after 4 minutes if response is empty
+    const redirectTimeout = setTimeout(() => {
+      if (!response.data) {
+        setError(true)
+      }
+    }, 4 * 60 * 1000); // 4 minutes in milliseconds
+
+    // Clear the timeout if a response is received before the timeout
+    if (response.data) {
+      clearTimeout(redirectTimeout);
+    } */
+  } catch (error) {
+    console.error('Error generating the image:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchResults = async () => {
     try {
@@ -90,59 +100,7 @@ export default function Tasks({ token, credits, setCredits }) {
     }
   };
 
-    useEffect(() => {
-      // Fetch the user's credits from Firestore
-      const fetchCredits = async () => {
-        try {
-          const user = auth.currentUser;
-          console.log("user", user);
-          if (user) {
-            console.log("aki");
-            const userSnapshot = await db.collection("users").doc(user.uid).get();
-            console.log(userSnapshot);
-            if (userSnapshot.exists) {
-              console.log("laa");
-              const userData = userSnapshot.data();
-              let userCredits = userData.credits || 0;
-              userCredits -= 1;
-              console.log(userCredits);
-              setCredits(userCredits);
-              console.log("userCredits", userCredits);
-              console.log("credits", credits);
-      
-              // Update Firestore document
-              await db.collection("users").doc(user.uid).update({
-                credits: userCredits,
-              });
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching credits:", error);
-          // Handle the error gracefully
-        }
-      };
-      
-  
-      // Listen for changes in the authorizedUser state
-      const unsubscribe = auth.onAuthStateChanged((user) => {
-        if (user) {
-          console.log("User is signed in");
-          fetchCredits();
-        } else {
-          console.log("User is signed out");
-          setCredits(0);
-        }
-      });
-  
-      // Clean up the listener when the component unmounts
-      return () => {
-        unsubscribe();
-      };
-    }, []);
-
-
-
-
+    
   return (
     <div className="generate">
       <h1>Generate image now</h1>
@@ -168,7 +126,8 @@ export default function Tasks({ token, credits, setCredits }) {
             <option value="young woman">Girl</option>
           </select>
         </div>
-        {token ? (
+
+        {token && credits > 0 ? (
           <button type="submit" disabled={loading}>
           {loading ? 'Generating...' : 'Generate Image'}
         </button>
@@ -177,7 +136,12 @@ export default function Tasks({ token, credits, setCredits }) {
           <button className="logout-generate">Generate Image</button>
           </Link>
         )}
-        
+        <p>Image generation takes approximately 1 to 2 minutes.</p>
+        {error ? (
+           <p>An error occured, please try again.</p>
+        ) : (
+            <p></p>
+        )}
       </form>
     </div>
   );

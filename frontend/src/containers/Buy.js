@@ -1,6 +1,5 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { app } from "../config/firebaseauth";
 import token from "../img/token.png";
 import token1 from "../img/token2.png";
 import token2 from "../img/token3.png";
@@ -8,11 +7,8 @@ import token2 from "../img/token3.png";
 const stripePromise = loadStripe(
   "pk_live_51NGmWwDI1bwWeEay08ePMQavGqJMbMbJYFeWMxreO32aJ1HRK62muH2FhIXnMzVYSYPiTRCAxWWtO9lzbuic3j8F00lKIzpFur"
 );
-const db = app.auth();
-const db1 = app.firestore();
-const Buy = () => {
-  const user = db.currentUser;
 
+const Buy = () => {
   const handleCheckout = async (priceId) => {
     try {
       const stripe = await stripePromise;
@@ -34,7 +30,7 @@ const Buy = () => {
       const result = await stripe.redirectToCheckout({
         sessionId: session.id,
         lineItems: [{ price: priceId, quantity: 1 }],
-        successUrl: `https://futureblend.herokuapp.com/`,
+        successUrl: `https://futureblend.herokuapp.com/generate`,
         cancelUrl: "https://futureblend.herokuapp.com/",
         mode: "payment",
       });
@@ -64,7 +60,7 @@ const Buy = () => {
       <section className="creds">
         <div className="creds-div">
           <img className="creds-image" src={token} alt="FutureBlend credit" />
-          <p className="creds-content">$0.60 per image</p>
+          <p className="creds-content">$0.60 per imag (4 images total)</p>
           <button
             onClick={() => handleCheckout("price_1NHCeaDI1bwWeEays9buan4Q")}
           >
@@ -77,7 +73,7 @@ const Buy = () => {
             src={token2}
             alt="FutureBlend credit image2"
           />
-          <p className="creds-content">$0.50 per image</p>
+          <p className="creds-content">$0.50 per image (10 images total)</p>
           <button
             onClick={() => handleCheckout("price_1NHCdjDI1bwWeEayNsfZ8mPz")}
           >
@@ -90,7 +86,7 @@ const Buy = () => {
             src={token1}
             alt="FutureBlend credit image3"
           />
-          <p className="creds-content">$0.40 per image</p>
+          <p className="creds-content">$0.40 per image (25 images total)</p>
           <button
             onClick={() => handleCheckout("price_1NHCeaDI1bwWeEays9buan4Q")}
           >

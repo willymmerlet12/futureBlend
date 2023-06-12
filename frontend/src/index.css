@@ -739,7 +739,20 @@ footer .terms {
   .howitworks {
     width: 85%;
   }
-  
+  form p {
+    margin-top: 20px;
+    color: gray;
+    font-size: 14px;
+  }
+  .log {
+    margin-top: 20px;
+    width: 200px;
+    height: 40px;
+    background-color: #0a141e;
+    color: white;
+    border: none;
+    border-radius: 12px;
+  }
   /* Show burger menu icon at max-width: 750px */
   @media(max-width: 750px) {
     .buttons,
@@ -877,7 +890,7 @@ footer .terms {
   }
   .menu li {
     list-style: outside none none;
-    margin: 10px 0px;
+    margin: 20px 0px;
     padding: 0;
     cursor: pointer;
   }
