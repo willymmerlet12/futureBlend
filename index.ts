@@ -18,15 +18,14 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
+app.use(cors());
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin: *');
-    res.header('Access-Control-Allow-Origin', "*");
-    res.header('Access-Control-Allow-Origin', "https://futureblend.herokuapp.com");
-    res.header('Access-Control-Allow-Origin', 'https://futureblendai.com/generate https://futureblend.herokuapp.com/generate');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    next();
-  });
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
+
 app.set("view engine", "ejs");
 
 app.use(authMiddleware.decodeToken);
