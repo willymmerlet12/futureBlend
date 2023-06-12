@@ -7,7 +7,7 @@ import multer from "multer";
 import { v4 as uuidv4 } from 'uuid';
 import authMiddleware from "./auth-middleware";
 import cors from "cors";
-import { verify, sign } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import serviceAccount from "./credentials.json"
 import { appli } from "./Utlis/config";
 import fs from "fs";
@@ -15,15 +15,17 @@ import { ref, getDownloadURL, uploadBytes} from "firebase/storage";
 import Stripe from "stripe";
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
 const app = express();
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors());
+
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://futureblendai.com');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 });
+app.use(cors());
 
 app.set("view engine", "ejs");
 
@@ -36,7 +38,7 @@ const domain = "https://futureblendai.com";
 const payload = { userId: '4526821' };
 const secretKey = 'letssee';
 const privateKey = fs.readFileSync('./private.key', 'utf8');
-const token = sign(payload, privateKey, {algorithm: "RS256" });
+const token = jwt.sign(payload, privateKey, {algorithm: "RS256" });
 
 
 const client = new Midjourney({
@@ -99,7 +101,7 @@ app.post("/generate", async (req, res) => {
  
   const publicKey = fs.readFileSync('./public.key', 'utf8');
   console.log(publicKey);
-  verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
+  jwt.verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
     if (err) {
       // Token verification failed
       console.error(err);

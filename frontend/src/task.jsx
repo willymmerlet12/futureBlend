@@ -42,66 +42,53 @@ export default function Tasks({ token, credits, setCredits }) {
     setFilesToSend(filesToSend);
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    console.log("submit in progress");
-    const formData = new FormData();
-    formData.append('description', gender);
-    for (let i = 0; i < filesToSend.length; i++) {
-      formData.append('images', filesToSend[i]);
-    }
-  
+const handleSubmit = async (event) => {
+  event.preventDefault();
+  console.log("submit in progress");
+  const formData = new FormData();
+  formData.append('description', gender);
+  for (let i = 0; i < filesToSend.length; i++) {
+    formData.append('images', filesToSend[i]);
+  }
+
+  try {
+    setLoading(true);
+
+    const response = await axios.post('http://localhost:3001/generate', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log("response", response);
+
+    const { message, msg } = response.data;
+
+    fetchResults();
+
+ 
+  } catch (error) {
+    console.error('Error generating the image:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  const fetchResults = async () => {
     try {
-      setLoading(true);
-  
-      const response = await axios.post('https://futureblend.herokuapp.com/generate', formData, {
+      const response = await axios.get('https://futureblend.herokuapp.com/get-msg', {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("response", response);
-  
-      const { message, msg } = response.data;
-  
-      // Wait for the results to be ready
-      await waitForResults();
-  
-      navigate('/results', { state: { result: results } });
-    } catch (error) {
-      console.error('Error generating the image:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const waitForResults = async () => {
-    while (true) {
-      try {
-        const response = await axios.get('https://futureblend.herokuapp.com/get-msg', {
-          headers: {
             Authorization: `Bearer ${token}`
-          }
-        });
-  
-        console.log("response results", response);
-        const { msg } = response.data;
-  
-        if (msg) {
-          setResults(msg);
-          break; // Exit the loop when results are available
         }
-  
-        // Delay for a certain period before checking again
-        await delay(120000); // Adjust the delay time as needed
-      } catch (error) {
-        console.error('Error fetching the results:', error);
-      }
+      });
+      console.log("response results", response);
+      setResults(response.data.msg);
+    navigate('/results', { state: { result: response.data.msg } });
+    } catch (error) {
+      console.error('Error fetching the results:', error);
     }
   };
-  
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  
 
     
   return (
