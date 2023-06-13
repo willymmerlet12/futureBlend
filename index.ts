@@ -17,19 +17,7 @@ import Stripe from "stripe";
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
 const app = express();
 
-const domainsFromEnv = process.env.CORS_DOMAINS || ""
-const whitelist = domainsFromEnv.split(",").map(item => item.trim())
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || whitelist.indexOf(origin) !== -1) {
-      callback(null, true)
-    } else {
-      callback(new Error("Not allowed by CORS"))
-    }
-  },
-  credentials: true,
-}
-app.use(cors(corsOptions))
+app.use(cors());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -106,6 +94,12 @@ app.get("/get-msg", (req, res) => {
   });
 
 app.post("/generate", async (req, res) => {
+
+  res.setHeader("Access-Control-Allow-Origin", "*")
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Max-Age", "1800");
+  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  res.setHeader( "Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, PATCH, OPTIONS" ); 
 
    /* if (!req.headers.authorization) {
         res.status(401).send("Unauthorized");
