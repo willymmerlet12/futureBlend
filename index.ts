@@ -64,8 +64,8 @@ async function generateImage(description: string, imageBuffer: string[]): Promis
       const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
         console.log("loading", uri, "progress", progress);
       });
-     /* storedMsg.push(msg)
-      console.log(msg); */
+      storedMsg.push(msg)
+      console.log(msg);
       return msg; // Return the response data
     } catch (err) {
       throw new Error("Error generating the image: " + err.message);
@@ -80,26 +80,48 @@ app.get("/", (req, res) => {
 
 app.get("/get-msg", (req, res) => {
   if (storedMsg.length > 0) {
-    console.log("getting results object");
+    console.log("Getting results object");
     res.status(200).json({ msg: storedMsg });
   } else {
-    res.status(404).json({ message: "Msg not found." });
-  }
-  });
-  const imageQueue: any[] = [];
-
-  app.post("/generate", async (req, res) => {
- 
-    uploadMiddleware(req, res, async (err) => {
-      if (err) {
-        res.status(400).send("Error uploading files.");
-        return;
+    // Stored messages not found, retry after 20 seconds
+    setTimeout(() => {
+      if (storedMsg) {
+        console.log("Getting results object");
+        res.status(200).json({ msg: storedMsg });
+      } else {
+        res.status(404).json({ message: "Msg not found." });
       }
+    }, 60000); // 30 seconds
+  }
+});
 
-      const { description } = req.body;
-      const imageUrls: string[] = [];
 
-      if (Array.isArray(req.files)) {
+  let imageQueue: any[] = []
+
+app.post("/generate",  async (req, res) => {
+ 
+  const publicKey = fs.readFileSync('./public.key', 'utf8');
+  console.log(publicKey);
+  jwt.verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
+    if (err) {
+      // Token verification failed
+      console.error(err);
+    } else {
+      // Token verification successful
+      console.log(decoded);
+    }
+  });
+
+  uploadMiddleware(req, res, async (err) => {
+    if (err) {
+      res.status(400).send("Error uploading files.");
+      return;
+    }
+
+    const { description } = req.body;
+    const imageUrls: string[] = [];
+
+    if (Array.isArray(req.files)) {
         for (let i = 0; i < req.files.length; i++) {
           const file = req.files[i];
           const idd = uuidv4();
@@ -110,56 +132,53 @@ app.get("/get-msg", (req, res) => {
           imageUrls.push(downloadURL);
         }
       }
+      
 
-      const jobId = uuidv4();
-  
-      const job = {
-        id: jobId,
-        description,
-        imageUrls,
-        status: "queued",
-        result: null,
-        error: null,
-      };
-  
-      // Add the job to the queue
-      imageQueue.push(job);
-  
-      res.status(200).json({ message: "Image generation task enqueued.", jobId });
-  
-      // Process the job immediately if the queue is empty
-      if (imageQueue.length === 1) {
-        try {
-          const generatedImage = await generateImage(description, imageUrls);
-  
-          // Update the job status to "completed" and store the result
-          job.status = "completed";
-          job.result = generatedImage;
+    console.log(description);
+    console.log(imageUrls);  
 
-          storedMsg.push(generatedImage);
-          // Handle the generated image (e.g., save to storage, send notifications, etc.)
-          // ...
-  
-          // Remove the job from the queue
-          imageQueue.shift();
-  
-          // Update the client with the generated image
-          res.status(200).json({ message: "Image generated successfully.", generatedImage });
-        } catch (err) {
-          // Update the job status to "failed" and store the error
-          job.status = "failed";
-          job.error = err.message;
-  
-          // Remove the job from the queue
-          imageQueue.shift();
-  
-          res.status(500).send("Error generating the image.");
-          console.log(err.message);
-        }
+    const jobId = uuidv4();
+
+    const job = {
+      id: jobId,
+      description,
+      imageUrls,
+      status: "queued",
+      result: null,
+      error: null,
+    };
+
+    // Add the job to the queue
+    imageQueue.push(job);
+
+    // Process the job immediately if the queue is empty
+    if (imageQueue.length === 1) {
+      try {
+        res.status(200).json({ message: "Image generation task enqueued.", jobId });
+        const generatedImage = await generateImage(description, imageUrls);
+
+        // Update the job status to "completed" and store the result
+        job.status = "completed";
+        job.result = generatedImage;
+
+        // Remove the job from the queue
+        imageQueue.shift();
+
+        // Update the client with the generated image
+      } catch (err) {
+        // Update the job status to "failed" and store the error
+        job.status = "failed";
+        job.error = err.message;
+
+        // Remove the job from the queue
+        imageQueue.shift();
+
+        res.status(500).send("Error generating the image.");
+        console.log(err.message);
       }
-    });
-  });
-  
+    }
+ });
+});
 
 app.get("/result/:id", async (req, res) => {
     const id = req.params.id;

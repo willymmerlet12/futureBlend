@@ -59,7 +59,7 @@ export default function Tasks({ token, credits, setCredits }) {
           Authorization: `Bearer ${token}`,
         },
       });
-      await new Promise((resolve) => setTimeout(resolve, 140000));
+     /* await new Promise((resolve) => setTimeout(resolve, 80000)); */
       console.log("response", response);
   
       const { message, msg } = response.data;
@@ -80,7 +80,8 @@ export default function Tasks({ token, credits, setCredits }) {
 
   const fetchResults = async () => {
     try {
-      const response = await axios.get('https://futureblend.herokuapp.com/get-msg', {
+      setLoading(true)
+      const response = await axios.get('https://futureblend.herokuapp.com/generate/get-msg', {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -90,6 +91,8 @@ export default function Tasks({ token, credits, setCredits }) {
       navigate('/results', { state: { result: response.data.msg } });
     } catch (error) {
       console.error('Error fetching the results:', error);
+    } finally {
+      setLoading(false)
     }
   };
 
