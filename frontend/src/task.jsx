@@ -54,12 +54,11 @@ export default function Tasks({ token, credits, setCredits }) {
     try {
       setLoading(true);
   
-      const response = await axios.post('https://futureblend.herokuapp.com/generate', formData, {
+      const response = await axios.post('http://localhost:3001/generate', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
         },
-        timeout: 3 * 60 * 1000, // Set the timeout to 2 minutes (in milliseconds)
       });
       console.log("response", response);
   
@@ -81,7 +80,7 @@ export default function Tasks({ token, credits, setCredits }) {
 
   const fetchResults = async () => {
     try {
-      const response = await axios.get('https://futureblend.herokuapp.com/get-msg', {
+      const response = await axios.get('http://localhost:3001/get-msg', {
         headers: {
             Authorization: `Bearer ${token}`
         }
