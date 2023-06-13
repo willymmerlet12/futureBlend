@@ -4,7 +4,6 @@ import express from "express";
 import { Midjourney } from "./src";
 import bodyParser from "body-parser";
 import multer from "multer";
-import request from "request";
 import { v4 as uuidv4 } from 'uuid';
 import authMiddleware from "./auth-middleware";
 import cors from "cors";
@@ -21,7 +20,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://futureblendai.com/');
+  res.header('Access-Control-Allow-Origin', 'https://futureblendai.com');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
@@ -87,79 +86,77 @@ app.get("/get-msg", (req, res) => {
   });
 
 app.post("/generate", async (req, res) => {
-request(
-  if (!req.headers.authorization) {
-    res.status(401).send("Unauthorized");
-    return;
-  }
 
-  // Retrieve the authorization token from the header
-  const authToken = req.headers.authorization;
-  console.log(authToken);
-  
-// Validate the access token
-const accessToken = authToken.split(' ')[1]; // Extract the token from the Authorization header
-
-const publicKey = fs.readFileSync('./public.key', 'utf8');
-console.log(publicKey);
-jwt.verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
-if (err) {
-  // Token verification failed
-  console.error(err);
-} else {
-  // Token verification successful
-  console.log(decoded);
-}
-});
-
-uploadMiddleware(req, res, async (err) => {
-if (err) {
-  res.status(400).send("Error uploading files.");
-  return;
-}
-
-const { description } = req.body;
-const imageUrls: string[] = [];
-
-if (Array.isArray(req.files)) {
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
-      const idd = uuidv4();
-      const fileRef = ref(appli.storage().ref(), `${file.fieldname}-${i}${idd}`);
-      const metadata = { contentType: 'image/jpeg' };
-      await uploadBytes(fileRef, file.buffer, metadata);
-      const downloadURL = await getDownloadURL(fileRef);
-      imageUrls.push(downloadURL);
-    }
-  }
-  
-
-console.log(description);
-console.log(imageUrls);  
-
-/*  const { description, imageUrls } = req.body; */
-
-try {
-
- // Generate unique ID for the image generation request
-  const id = uuidv4();
-  const imageResults: any[] = []
-
-// Store the image generation request in the map
-  imageRequests.set(id, { description, imageUrls });
-  // Call generateImage function passing the image URLs
-  console.log("akii");
-  
-  const msg = await generateImage(description, imageUrls);
-  imageRequests.delete(id);
-  res.status(200).json({ message: "Image generated successfully.", msg });
-} catch (err) {
-  res.status(500).send("Error generating the image.");
-  console.log(err.message);
-}
-});
-)
+   /* if (!req.headers.authorization) {
+        res.status(401).send("Unauthorized");
+        return;
+      } */
     
+      // Retrieve the authorization token from the header
+      const authToken = req.headers.authorization;
+      console.log(authToken);
+      
+    // Validate the access token
+  const accessToken = authToken.split(' ')[1]; // Extract the token from the Authorization header
+ 
+  const publicKey = fs.readFileSync('./public.key', 'utf8');
+  console.log(publicKey);
+  jwt.verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
+    if (err) {
+      // Token verification failed
+      console.error(err);
+    } else {
+      // Token verification successful
+      console.log(decoded);
+    }
+  });
+
+  uploadMiddleware(req, res, async (err) => {
+    if (err) {
+      res.status(400).send("Error uploading files.");
+      return;
+    }
+
+    const { description } = req.body;
+    const imageUrls: string[] = [];
+
+    if (Array.isArray(req.files)) {
+        for (let i = 0; i < req.files.length; i++) {
+          const file = req.files[i];
+          const idd = uuidv4();
+          const fileRef = ref(appli.storage().ref(), `${file.fieldname}-${i}${idd}`);
+          const metadata = { contentType: 'image/jpeg' };
+          await uploadBytes(fileRef, file.buffer, metadata);
+          const downloadURL = await getDownloadURL(fileRef);
+          imageUrls.push(downloadURL);
+        }
+      }
+      
+
+    console.log(description);
+    console.log(imageUrls);  
+
+  /*  const { description, imageUrls } = req.body; */
+
+    try {
+
+     // Generate unique ID for the image generation request
+      const id = uuidv4();
+      const imageResults: any[] = []
+
+    // Store the image generation request in the map
+      imageRequests.set(id, { description, imageUrls });
+      // Call generateImage function passing the image URLs
+      console.log("akii");
+      
+      const msg = await generateImage(description, imageUrls);
+      imageRequests.delete(id);
+      res.status(200).json({ message: "Image generated successfully.", msg });
+    } catch (err) {
+      res.status(500).send("Error generating the image.");
+      console.log(err.message);
+    }
+ });
 });
 
 app.get("/result/:id", async (req, res) => {
