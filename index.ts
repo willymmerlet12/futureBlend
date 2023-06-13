@@ -100,75 +100,78 @@ app.get("/get-msg", (req, res) => {
     }
   });
 
-app.post("/generate", async (req, res) => {
-
-   /* if (!req.headers.authorization) {
-        res.status(401).send("Unauthorized");
+  app.post("/generate", async (req, res) => {
+    // ...
+  
+    const publicKey = fs.readFileSync('./public.key', 'utf8');
+    console.log(publicKey);
+    jwt.verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log(decoded);
+      }
+    });
+  
+    uploadMiddleware(req, res, async (err) => {
+      if (err) {
+        res.status(400).send("Error uploading files.");
         return;
-      } */
-    
-      // Retrieve the authorization token from the header
- // Extract the token from the Authorization header
- 
-  const publicKey = fs.readFileSync('./public.key', 'utf8');
-  console.log(publicKey);
-  jwt.verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
-    if (err) {
-      // Token verification failed
-      console.error(err);
-    } else {
-      // Token verification successful
-      console.log(decoded);
-    }
-  });
-
-  uploadMiddleware(req, res, async (err) => {
-    if (err) {
-      res.status(400).send("Error uploading files.");
-      return;
-    }
-
-    const { description } = req.body;
-    const imageUrls: string[] = [];
-
-    if (Array.isArray(req.files)) {
+      }
+  
+      const { description } = req.body;
+      const imageUrls: string[] = [];
+  
+      if (Array.isArray(req.files)) {
         for (let i = 0; i < req.files.length; i++) {
-          const file = req.files[i];
-          const idd = uuidv4();
-          const fileRef = ref(appli.storage().ref(), `${file.fieldname}-${i}${idd}`);
-          const metadata = { contentType: 'image/jpeg' };
-          await uploadBytes(fileRef, file.buffer, metadata);
-          const downloadURL = await getDownloadURL(fileRef);
-          imageUrls.push(downloadURL);
+          // ...
         }
       }
-      
-
-    console.log(description);
-    console.log(imageUrls);  
-
-  /*  const { description, imageUrls } = req.body; */
-
-    try {
-
-     // Generate unique ID for the image generation request
-      const id = uuidv4();
-      const imageResults: any[] = []
-
-    // Store the image generation request in the map
-      imageRequests.set(id, { description, imageUrls });
-      // Call generateImage function passing the image URLs
-      console.log("akii");
-      
-      const msg = await generateImage(description, imageUrls);
-      imageRequests.delete(id);
-      res.status(200).json({ message: "Image generated successfully.", msg });
-    } catch (err) {
-      res.status(500).send("Error generating the image.");
-      console.log(err.message);
-    }
- });
-});
+  
+      console.log(description);
+      console.log(imageUrls);
+  
+      try {
+        const id = uuidv4();
+        const imageResults: any[] = [];
+  
+        imageRequests.set(id, { description, imageUrls });
+  
+        // Call generateImage function passing the image URLs with long polling and chunked responses
+        const timeout = 120000; // 2 minutes timeout
+        const startTime = Date.now();
+        const responseInterval = 10000; // 10 seconds interval
+  
+        const intervalId = setInterval(async () => {
+          const elapsedTime = Date.now() - startTime;
+          if (elapsedTime >= timeout) {
+            clearInterval(intervalId);
+            res.status(500).send("Timeout exceeded while generating the image.");
+            return;
+          }
+  
+          try {
+            const msg = await generateImage(description, imageUrls);
+            imageResults.push(msg);
+            if (msg.complete) {
+              clearInterval(intervalId);
+              res.status(200).json({ message: "Image generated successfully.", msg: imageResults });
+              return;
+            }
+          } catch (err) {
+            clearInterval(intervalId);
+            res.status(500).send("Error generating the image.");
+            console.log(err.message);
+            return;
+          }
+        }, responseInterval);
+      } catch (err) {
+        res.status(500).send("Error generating the image.");
+        console.log(err.message);
+      }
+    });
+  });
+  
 
 app.get("/result/:id", async (req, res) => {
     const id = req.params.id;
