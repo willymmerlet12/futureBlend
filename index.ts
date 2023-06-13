@@ -17,20 +17,33 @@ import Stripe from "stripe";
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
 const app = express();
 
+app.use(
+  cors({
+    origin: [
+      "https://futureblendai.com",
+    ],
+    credentials: true,
+  })
+);
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://futureblendai.com');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
-});
-app.use(cors());
 
 app.set("view engine", "ejs");
 
 app.use(authMiddleware.decodeToken);
+
+//ERROR HANDLING
+app.use(function(err, req, res, next) {
+  if(!err) return next(); // you also need this line
+  console.log(err);
+  let returnObj = {
+    statusCode:err['statusCode'],
+    message:err['message']
+  }
+  res.status(err['statusCode']);
+  res.send(returnObj);
+});
 
 
 const stripe = new Stripe(`sk_test_51NGmWwDI1bwWeEayVG8QqRDLRa4xTxUQDRK9mynoh0GQRqzKfDC3NDDu3GpXIKXEgDDbrWOSJTDMmmnqDFDYrkfQ00HhS7iyYP`, {
