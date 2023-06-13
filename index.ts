@@ -64,8 +64,8 @@ async function generateImage(description: string, imageBuffer: string[]): Promis
       const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
         console.log("loading", uri, "progress", progress);
       });
-      storedMsg.push(msg)
-      console.log(msg);
+     /* storedMsg.push(msg)
+      console.log(msg); */
       return msg; // Return the response data
     } catch (err) {
       throw new Error("Error generating the image: " + err.message);
@@ -79,18 +79,17 @@ app.get("/", (req, res) => {
 });
 
 app.get("/get-msg", (req, res) => {
-    if (storedMsg) {
-      console.log("getting results object");
-      res.status(200).json({ msg: storedMsg });
-    } else {
-      res.status(404).json({ message: "Msg not found." });
-    }
+  if (storedMsg.length > 0) {
+    console.log("getting results object");
+    res.status(200).json({ msg: storedMsg });
+  } else {
+    res.status(404).json({ message: "Msg not found." });
+  }
   });
   const imageQueue: any[] = [];
 
   app.post("/generate", async (req, res) => {
  
-  
     uploadMiddleware(req, res, async (err) => {
       if (err) {
         res.status(400).send("Error uploading files.");
@@ -111,7 +110,7 @@ app.get("/get-msg", (req, res) => {
           imageUrls.push(downloadURL);
         }
       }
-      
+
       const jobId = uuidv4();
   
       const job = {
@@ -136,7 +135,8 @@ app.get("/get-msg", (req, res) => {
           // Update the job status to "completed" and store the result
           job.status = "completed";
           job.result = generatedImage;
-  
+
+          storedMsg.push(generatedImage);
           // Handle the generated image (e.g., save to storage, send notifications, etc.)
           // ...
   

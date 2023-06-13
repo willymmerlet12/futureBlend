@@ -59,10 +59,11 @@ export default function Tasks({ token, credits, setCredits }) {
           Authorization: `Bearer ${token}`,
         },
       });
+      await new Promise((resolve) => setTimeout(resolve, 140000));
       console.log("response", response);
   
       const { message, msg } = response.data;
-  
+      
       fetchResults();
     } catch (error) {
       if (axios.isCancel(error)) {
