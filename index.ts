@@ -230,6 +230,6 @@ app.get("/result/:id", async (req, res) => {
 
 app.listen(process.env.PORT || 3001, () => {
   console.log("Server started on port 3000");
-  console.log(process.env.PORT);
+  console.log("hey", process.env.PORT);
   
 });
