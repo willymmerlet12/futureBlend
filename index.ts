@@ -39,12 +39,8 @@ app.use(function(err, req, res, next) {
 });
 
 
-const stripe = new Stripe(`sk_test_51NGmWwDI1bwWeEayVG8QqRDLRa4xTxUQDRK9mynoh0GQRqzKfDC3NDDu3GpXIKXEgDDbrWOSJTDMmmnqDFDYrkfQ00HhS7iyYP`, {
-    apiVersion: "2022-11-15"
-})
-const domain = "https://futureblendai.com";
-const payload = { userId: '4526821' };
-const secretKey = 'letssee';
+
+const payload = { userId: process.env.PAYLOAD || "4526821" };
 const privateKey = fs.readFileSync('./private.key', 'utf8');
 const token = jwt.sign(payload, privateKey, {algorithm: "RS256" });
 
@@ -53,7 +49,7 @@ const client = new Midjourney({
   ServerId: process.env.SERVER_ID || "1091356628743360562",
   ChannelId: process.env.CHANNEL_ID || "1091356628743360565",
   SalaiToken: process.env.SALAI_TOKEN || "MTA2Mzg3NTg2NDA0OTI0MjEyMg.GKwb6x.YIJMGc-feZUPLvU1rtun6lwW4rfiZDB-b-BNBY",
-  HuggingFaceToken: process.env.HUGGINGFACE_TOKEN,
+  HuggingFaceToken: process.env.HUGGINGFACE_TOKEN || "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",
   Debug: true,
   Ws: true,
 });
@@ -197,39 +193,11 @@ app.get("/result/:id", async (req, res) => {
     }
   });
 
-  app.post('/create-checkout-session', async (req, res) => {
-    const {  priceId } = req.body;
-  
-    try {
-      // Retrieve the product price from Stripe
-      const price = await stripe.prices.retrieve(priceId);
-  
-      // Create a new checkout session
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price: price.id,
-            quantity: 1,
-          },
-        ],
-        mode: 'payment',
-        success_url: `http://localhost:3001/success`,
-        cancel_url: `http://localhost:3001/cancel`,
-      });
-  
-      res.json({ sessionId: session.id });
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      res.status(500).send('An error occurred while creating the checkout session.');
-    }
-  });
-
  
 
 
 app.listen(process.env.PORT || 3001, () => {
-  console.log("Server started on port 3000");
+  console.log("Server started on port", process.env.PORT || 3001);
   console.log("hey", process.env.PORT);
   
 });
