@@ -8,12 +8,10 @@ import { v4 as uuidv4 } from 'uuid';
 import authMiddleware from "./auth-middleware";
 import cors from "cors";
 import jwt from 'jsonwebtoken';
-import serviceAccount from "./credentials.json"
 import { appli } from "./Utlis/config";
 import fs from "fs";
 import timeout from "connect-timeout";
 import { ref, getDownloadURL, uploadBytes} from "firebase/storage";
-import Stripe from "stripe";
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
 const app = express();
 
@@ -89,7 +87,7 @@ app.get("/get-msg", (req, res) => {
     }
   });
 
-app.post("/generate", async (req, res) => {
+app.post("/generate",  async (req, res) => {
 
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -115,6 +113,16 @@ app.post("/generate", async (req, res) => {
       // Token verification successful
       console.log(decoded);
     }
+  });
+
+  const timeoutDuration = 2 * 60 * 1000; // 2 minutes in milliseconds
+
+  // Create a Promise that resolves after the timeout duration
+  const timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => {
+      // Reject the Promise after the timeout duration
+      resolve("Timeout"); // You can customize the error message if needed
+    }, timeoutDuration);
   });
 
   console.log(process.env.SERVER_ID);
@@ -158,7 +166,7 @@ app.post("/generate", async (req, res) => {
       // Call generateImage function passing the image URLs
       console.log("akii");
       
-      const msg = await generateImage(description, imageUrls);
+      const msg = await Promise.race([generateImage(description, imageUrls), timeoutPromise]);
       imageRequests.delete(id);
       res.status(200).json({ message: "Image generated successfully.", msg });
     } catch (err) {

@@ -1,1 +1,1 @@
-web: npx tsx index.ts
+web: npx tsx index.ts --timeout 10
