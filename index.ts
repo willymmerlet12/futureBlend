@@ -121,6 +121,9 @@ app.post("/generate", async (req, res) => {
     }
   });
 
+  console.log(process.env.SERVER_ID);
+  
+
   uploadMiddleware(req, res, async (err) => {
     if (err) {
       res.status(400).send("Error uploading files.");
@@ -227,4 +230,6 @@ app.get("/result/:id", async (req, res) => {
 
 app.listen(process.env.PORT || 3001, () => {
   console.log("Server started on port 3000");
+  console.log(process.env.PORT);
+  
 });
