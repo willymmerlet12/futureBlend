@@ -42,37 +42,41 @@ export default function Tasks({ token, credits, setCredits }) {
     setFilesToSend(filesToSend);
   };
 
-const handleSubmit = async (event) => {
-  event.preventDefault();
-  console.log("submit in progress");
-  const formData = new FormData();
-  formData.append('description', gender);
-  for (let i = 0; i < filesToSend.length; i++) {
-    formData.append('images', filesToSend[i]);
-  }
-
-  try {
-    setLoading(true);
-
-    const response = await axios.post('http://localhost:3001/generate', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log("response", response);
-
-    const { message, msg } = response.data;
-
-    fetchResults();
-
- 
-  } catch (error) {
-    console.error('Error generating the image:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    console.log("submit in progress");
+    const formData = new FormData();
+    formData.append('description', gender);
+    for (let i = 0; i < filesToSend.length; i++) {
+      formData.append('images', filesToSend[i]);
+    }
+  
+    try {
+      setLoading(true);
+  
+      const response = await axios.post('https://futureblend.herokuapp.com/generate', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+        timeout: 3 * 60 * 1000, // Set the timeout to 2 minutes (in milliseconds)
+      });
+      console.log("response", response);
+  
+      const { message, msg } = response.data;
+  
+      fetchResults();
+    } catch (error) {
+      if (axios.isCancel(error)) {
+        console.log('Request canceled due to timeout');
+      } else {
+        console.error('Error generating the image:', error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
 
   const fetchResults = async () => {
@@ -84,7 +88,7 @@ const handleSubmit = async (event) => {
       });
       console.log("response results", response);
       setResults(response.data.msg);
-    navigate('/results', { state: { result: response.data.msg } });
+      navigate('/results', { state: { result: response.data.msg } });
     } catch (error) {
       console.error('Error fetching the results:', error);
     }

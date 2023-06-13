@@ -11,6 +11,7 @@ import jwt from 'jsonwebtoken';
 import serviceAccount from "./credentials.json"
 import { appli } from "./Utlis/config";
 import fs from "fs";
+import timeout from "connect-timeout";
 import { ref, getDownloadURL, uploadBytes} from "firebase/storage";
 import Stripe from "stripe";
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
@@ -30,6 +31,7 @@ app.use(cors());
 app.set("view engine", "ejs");
 
 app.use(authMiddleware.decodeToken);
+
 
 const stripe = new Stripe(`sk_test_51NGmWwDI1bwWeEayVG8QqRDLRa4xTxUQDRK9mynoh0GQRqzKfDC3NDDu3GpXIKXEgDDbrWOSJTDMmmnqDFDYrkfQ00HhS7iyYP`, {
     apiVersion: "2022-11-15"
@@ -93,11 +95,7 @@ app.post("/generate", async (req, res) => {
       } */
     
       // Retrieve the authorization token from the header
-      const authToken = req.headers.authorization;
-      console.log(authToken);
-      
-    // Validate the access token
-  const accessToken = authToken.split(' ')[1]; // Extract the token from the Authorization header
+ // Extract the token from the Authorization header
  
   const publicKey = fs.readFileSync('./public.key', 'utf8');
   console.log(publicKey);
@@ -151,6 +149,7 @@ app.post("/generate", async (req, res) => {
       
       const msg = await generateImage(description, imageUrls);
       imageRequests.delete(id);
+      timeout(120000)
       res.status(200).json({ message: "Image generated successfully.", msg });
     } catch (err) {
       res.status(500).send("Error generating the image.");
