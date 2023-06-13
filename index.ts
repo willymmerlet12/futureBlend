@@ -86,58 +86,21 @@ app.get("/get-msg", (req, res) => {
       res.status(404).json({ message: "Msg not found." });
     }
   });
+  const imageQueue: any[] = [];
 
-app.post("/generate",  async (req, res) => {
-
-  res.setHeader("Access-Control-Allow-Origin", "*")
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Max-Age", "1800");
-  res.setHeader("Access-Control-Allow-Headers", "content-type");
-  res.setHeader( "Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, PATCH, OPTIONS" ); 
-
-   /* if (!req.headers.authorization) {
-        res.status(401).send("Unauthorized");
-        return;
-      } */
-    
-      // Retrieve the authorization token from the header
- // Extract the token from the Authorization header
+  app.post("/generate", async (req, res) => {
  
-  const publicKey = fs.readFileSync('./public.key', 'utf8');
-  console.log(publicKey);
-  jwt.verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
-    if (err) {
-      // Token verification failed
-      console.error(err);
-    } else {
-      // Token verification successful
-      console.log(decoded);
-    }
-  });
-
-  const timeoutDuration = 2 * 60 * 1000; // 2 minutes in milliseconds
-
-  // Create a Promise that resolves after the timeout duration
-  const timeoutPromise = new Promise((resolve) => {
-    setTimeout(() => {
-      // Reject the Promise after the timeout duration
-      resolve("Timeout"); // You can customize the error message if needed
-    }, timeoutDuration);
-  });
-
-  console.log(process.env.SERVER_ID);
   
+    uploadMiddleware(req, res, async (err) => {
+      if (err) {
+        res.status(400).send("Error uploading files.");
+        return;
+      }
 
-  uploadMiddleware(req, res, async (err) => {
-    if (err) {
-      res.status(400).send("Error uploading files.");
-      return;
-    }
+      const { description } = req.body;
+      const imageUrls: string[] = [];
 
-    const { description } = req.body;
-    const imageUrls: string[] = [];
-
-    if (Array.isArray(req.files)) {
+      if (Array.isArray(req.files)) {
         for (let i = 0; i < req.files.length; i++) {
           const file = req.files[i];
           const idd = uuidv4();
@@ -149,32 +112,54 @@ app.post("/generate",  async (req, res) => {
         }
       }
       
-
-    console.log(description);
-    console.log(imageUrls);  
-
-  /*  const { description, imageUrls } = req.body; */
-
-    try {
-
-     // Generate unique ID for the image generation request
-      const id = uuidv4();
-      const imageResults: any[] = []
-
-    // Store the image generation request in the map
-      imageRequests.set(id, { description, imageUrls });
-      // Call generateImage function passing the image URLs
-      console.log("akii");
-      
-      const msg = await Promise.race([generateImage(description, imageUrls), timeoutPromise]);
-      imageRequests.delete(id);
-      res.status(200).json({ message: "Image generated successfully.", msg });
-    } catch (err) {
-      res.status(500).send("Error generating the image.");
-      console.log(err.message);
-    }
- });
-});
+      const jobId = uuidv4();
+  
+      const job = {
+        id: jobId,
+        description,
+        imageUrls,
+        status: "queued",
+        result: null,
+        error: null,
+      };
+  
+      // Add the job to the queue
+      imageQueue.push(job);
+  
+      res.status(200).json({ message: "Image generation task enqueued.", jobId });
+  
+      // Process the job immediately if the queue is empty
+      if (imageQueue.length === 1) {
+        try {
+          const generatedImage = await generateImage(description, imageUrls);
+  
+          // Update the job status to "completed" and store the result
+          job.status = "completed";
+          job.result = generatedImage;
+  
+          // Handle the generated image (e.g., save to storage, send notifications, etc.)
+          // ...
+  
+          // Remove the job from the queue
+          imageQueue.shift();
+  
+          // Update the client with the generated image
+          res.status(200).json({ message: "Image generated successfully.", generatedImage });
+        } catch (err) {
+          // Update the job status to "failed" and store the error
+          job.status = "failed";
+          job.error = err.message;
+  
+          // Remove the job from the queue
+          imageQueue.shift();
+  
+          res.status(500).send("Error generating the image.");
+          console.log(err.message);
+        }
+      }
+    });
+  });
+  
 
 app.get("/result/:id", async (req, res) => {
     const id = req.params.id;
