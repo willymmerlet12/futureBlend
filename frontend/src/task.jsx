@@ -50,49 +50,40 @@ export default function Tasks({ token, credits, setCredits }) {
     for (let i = 0; i < filesToSend.length; i++) {
       formData.append('images', filesToSend[i]);
     }
-  
+
     try {
       setLoading(true);
-  
-      const response = await axios.post('https://futureblend.herokuapp.com/generate', formData, {
+
+      const response = await axios.post('http://localhost:3001/generate', formData, {
         headers: {
+          'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
         },
       });
-     /* await new Promise((resolve) => setTimeout(resolve, 80000)); */
       console.log("response", response);
-  
+
       const { message, msg } = response.data;
-      
-      fetchResults();
+
+      fetchResults()
     } catch (error) {
-      if (axios.isCancel(error)) {
-        console.log('Request canceled due to timeout');
-      } else {
-        console.error('Error generating the image:', error);
-      }
+      console.error('Error generating the image:', error);
     } finally {
       setLoading(false);
     }
   };
-  
-
 
   const fetchResults = async () => {
     try {
-      setLoading(true)
-      const response = await axios.get('https://futureblend.herokuapp.com/generate/get-msg', {
+      const response = await axios.get('http://localhost:3001/get-msg', {
         headers: {
             Authorization: `Bearer ${token}`
         }
       });
       console.log("response results", response);
       setResults(response.data.msg);
-      navigate('/results', { state: { result: response.data.msg } });
+    navigate('/results', { state: { result: response.data.msg } });
     } catch (error) {
       console.error('Error fetching the results:', error);
-    } finally {
-      setLoading(false)
     }
   };
 

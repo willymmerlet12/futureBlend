@@ -7,7 +7,7 @@ import multer from "multer";
 import { v4 as uuidv4 } from 'uuid';
 import authMiddleware from "./auth-middleware";
 import cors from "cors";
-import jwt from 'jsonwebtoken';
+import {sign, verify } from 'jsonwebtoken';
 import { appli } from "./Utlis/config";
 import fs from "fs";
 import timeout from "connect-timeout";
@@ -38,9 +38,11 @@ app.use(function(err, req, res, next) {
 
 
 
-const payload = { userId: process.env.PAYLOAD || "4526821" };
+const domain = "https://futureblendai.com";
+const payload = { userId: '4526821' };
+const secretKey = 'letssee';
 const privateKey = fs.readFileSync('./private.key', 'utf8');
-const token = jwt.sign(payload, privateKey, {algorithm: "RS256" });
+const token = sign(payload, privateKey, {algorithm: "RS256" });
 
 
 const client = new Midjourney({
@@ -79,30 +81,31 @@ app.get("/", (req, res) => {
 });
 
 app.get("/get-msg", (req, res) => {
-  if (storedMsg.length > 0) {
-    console.log("Getting results object");
-    res.status(200).json({ msg: storedMsg });
-  } else {
-    // Stored messages not found, retry after 20 seconds
-    setTimeout(() => {
-      if (storedMsg) {
-        console.log("Getting results object");
-        res.status(200).json({ msg: storedMsg });
-      } else {
-        res.status(404).json({ message: "Msg not found." });
+    if (storedMsg) {
+      console.log("getting results object");
+      res.status(200).json({ msg: storedMsg });
+    } else {
+      res.status(404).json({ message: "Msg not found." });
+    }
+  });
+
+app.post("/generate", async (req, res) => {
+
+    if (!req.headers.authorization) {
+        res.status(401).send("Unauthorized");
+        return;
       }
-    }, 60000); // 30 seconds
-  }
-});
-
-
-  let imageQueue: any[] = []
-
-app.post("/generate",  async (req, res) => {
+    
+      // Retrieve the authorization token from the header
+      const authToken = req.headers.authorization;
+      console.log(authToken);
+      
+    // Validate the access token
+  const accessToken = authToken.split(' ')[1]; // Extract the token from the Authorization header
  
   const publicKey = fs.readFileSync('./public.key', 'utf8');
   console.log(publicKey);
-  jwt.verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
+  verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
     if (err) {
       // Token verification failed
       console.error(err);
@@ -137,45 +140,25 @@ app.post("/generate",  async (req, res) => {
     console.log(description);
     console.log(imageUrls);  
 
-    const jobId = uuidv4();
+  /*  const { description, imageUrls } = req.body; */
 
-    const job = {
-      id: jobId,
-      description,
-      imageUrls,
-      status: "queued",
-      result: null,
-      error: null,
-    };
+    try {
 
-    // Add the job to the queue
-    imageQueue.push(job);
+     // Generate unique ID for the image generation request
+      const id = uuidv4();
+      const imageResults: any[] = []
 
-    // Process the job immediately if the queue is empty
-    if (imageQueue.length === 1) {
-      try {
-        res.status(200).json({ message: "Image generation task enqueued.", jobId });
-        const generatedImage = await generateImage(description, imageUrls);
-
-        // Update the job status to "completed" and store the result
-        job.status = "completed";
-        job.result = generatedImage;
-
-        // Remove the job from the queue
-        imageQueue.shift();
-
-        // Update the client with the generated image
-      } catch (err) {
-        // Update the job status to "failed" and store the error
-        job.status = "failed";
-        job.error = err.message;
-
-        // Remove the job from the queue
-        imageQueue.shift();
-
-        res.status(500).send("Error generating the image.");
-        console.log(err.message);
-      }
+    // Store the image generation request in the map
+      imageRequests.set(id, { description, imageUrls });
+      // Call generateImage function passing the image URLs
+      console.log("akii");
+      
+      const msg = await generateImage(description, imageUrls);
+      imageRequests.delete(id);
+      res.status(200).json({ message: "Image generated successfully.", msg });
+    } catch (err) {
+      res.status(500).send("Error generating the image.");
+      console.log(err.message);
     }
  });
 });
