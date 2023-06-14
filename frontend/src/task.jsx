@@ -1,6 +1,37 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import io from 'socket.io-client';
+/*const socket = io("http://localhost:3002", {
+  cors: {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+  }
+  });
+socket.on('jobStatusUpdated', (data) => {
+  const { jobId, status, progress } = data;
+
+  // Update the UI based on the received job status and progress
+  // For example, you can update a progress bar or display the status message
+  console.log(`Job ${jobId} status updated: ${status}, Progress: ${progress}%`);
+}); */
+
+/*setInterval(() => {
+  fetch('http://localhost:3002/jobStatusUpdated', {
+    headers: {
+      Authorization: `Bearer`,
+    },
+  })
+    .then((response) => response.text())
+    .then((data) => {
+      console.log('Received server update:', data);
+      // Process the server update
+    })
+    .catch((error) => {
+      console.error('Error fetching server update:', error);
+    });
+}, 5000); */
 
 
 export default function Tasks({ token, credits, setCredits }) {
@@ -54,7 +85,30 @@ export default function Tasks({ token, credits, setCredits }) {
     try {
       setLoading(true);
 
-      const response = await axios.post('http://localhost:3001/generate', formData, {
+      // Socket code
+      const socket = io('https://futureblend.herokuapp.com', {
+        withCredentials: true,
+        extraHeaders: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+    socket.on('connect', () => {
+      console.log('Socket connected');
+      // Perform actions when the socket is connected
+    });
+
+    socket.on('jobStatusUpdated', (data) => {
+      console.log('Received server update:', data);
+      // Process the server update
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+      // Perform actions when the socket is disconnected
+    });
+
+      const response = await axios.post('https://futureblend.herokuapp.com/generate', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
@@ -74,7 +128,7 @@ export default function Tasks({ token, credits, setCredits }) {
 
   const fetchResults = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/get-msg', {
+      const response = await axios.get('https://futureblend.herokuapp.com/get-msg', {
         headers: {
             Authorization: `Bearer ${token}`
         }

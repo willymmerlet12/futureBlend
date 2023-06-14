@@ -10,12 +10,28 @@ import cors from "cors";
 import {sign, verify } from 'jsonwebtoken';
 import { appli } from "./Utlis/config";
 import fs from "fs";
+import{ createServer } from "http";
+import { Server as SocketIO } from 'socket.io';
 import timeout from "connect-timeout";
 import { ref, getDownloadURL, uploadBytes} from "firebase/storage";
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
 const app = express();
-
-app.use(cors());
+const httpServer = createServer(app);
+const corsOptions = {
+  origin: 'https://futureblend.herokuapp.com',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Authorization'],
+  credentials: true
+};
+const io = new SocketIO(httpServer, {
+  cors: corsOptions
+});
+app.use(cors({
+  origin: 'https://futureblend.herokuapp.com',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Authorization'],
+  credentials: true
+}));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -37,7 +53,6 @@ app.use(function(err, req, res, next) {
 });
 
 
-
 const domain = "https://futureblendai.com";
 const payload = { userId: '4526821' };
 const secretKey = 'letssee';
@@ -56,15 +71,39 @@ const client = new Midjourney({
 
 const imageRequests = new Map();
 let storedMsg: any[] = []
+const imageQueue: any[] = [];
 
-async function generateImage(description: string, imageBuffer: string[]): Promise<any> {
+function updateJobStatus(jobId: string, status: string, progress: number) {
+  // Find the job in the imageQueue array based on the jobId
+  const job = imageQueue.find((job) => job.id === jobId);
+
+  if (job) {
+    // Update the job status and progress
+    job.status = status;
+    job.progress = progress;
+
+    // Emit the updated job status to connected clients
+    io.emit("jobStatusUpdated", { jobId, status, progress });
+  }
+}
+
+async function generateImage(description: string, imageBuffer: string[], jobId: string): Promise<any> {
     try {
-        console.log("ka");
+      console.log("ka");
       await client.init();
       console.log("boom");
       const prompt = `${imageBuffer[0]} ${imageBuffer[1]} "the future ${description} of those 2 persons. Ultra realistic, HD, 4K"`;
+      let progresss = 0;
+      io.emit("jobStatusUpdated", "starting");
       const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
+        io.emit("jobStatusUpdated", "continuing")
+        const currentProgress = Number(progress);
+        if (currentProgress > progresss) {
+          progresss = currentProgress;
+          updateJobStatus(jobId, 'in progress', progresss);
+        }
         console.log("loading", uri, "progress", progress);
+        io.emit('jobStatusUpdated', { jobId, status: 'in progress', progress });
       });
       storedMsg.push(msg)
       console.log(msg);
@@ -151,11 +190,16 @@ app.post("/generate", async (req, res) => {
     // Store the image generation request in the map
       imageRequests.set(id, { description, imageUrls });
       // Call generateImage function passing the image URLs
+
+      // Add the job to the imageQueue
+    imageQueue.push({ id, status: 'pending', progress: 0 });
+
       console.log("akii");
       
-      const msg = await generateImage(description, imageUrls);
+      const msg = await generateImage(description, imageUrls, id);
       imageRequests.delete(id);
       res.status(200).json({ message: "Image generated successfully.", msg });
+      io.emit("disconnect", "disconneted")
     } catch (err) {
       res.status(500).send("Error generating the image.");
       console.log(err.message);
@@ -173,7 +217,7 @@ app.get("/result/:id", async (req, res) => {
   
       try {
         // Call generateImage function passing the image URLs
-        const result = await generateImage(description, imageUrls);
+        const result = await generateImage(description, imageUrls, id);
   
         // Remove the image generation request from the map
         imageRequests.delete(id);
@@ -195,4 +239,36 @@ app.listen(process.env.PORT || 3001, () => {
   console.log("Server started on port", process.env.PORT || 3001);
   console.log("hey", process.env.PORT);
   
+});
+
+
+
+io.on('connection', (socket) => {
+  console.log('A client connected');
+
+  // Handle events from the client
+  socket.on('someEvent', (data) => {
+    console.log('Received data:', data);
+    // Perform actions based on the received data
+  });
+
+  // Send updates to the client
+  setInterval(() => {
+    const message = 'This is a server update';
+    socket.emit('serverUpdate', message);
+  }, 5000);
+
+  socket.on('jobStatusUpdated', (data) => {
+    console.log('Received job status update from client:', data);
+    // Perform actions based on the received job status update
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    console.log('A client disconnected');
+  });
+});
+
+httpServer.listen(process.env.SERVER || 3002, () => {
+  console.log('Socket.IO server is listening on port 3000');
 });

@@ -8,6 +8,8 @@ export interface MJMessage {
 
 export type LoadingHandler = (uri: string, progress: string) => void;
 
+export type ProgressHandler = (uri: string, progress: string) => void;
+
 export interface WaitMjEvent {
   nonce: string;
   prompt?: string;
