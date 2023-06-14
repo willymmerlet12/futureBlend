@@ -18,7 +18,7 @@ const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('imag
 const app = express();
 const httpServer = createServer(app);
 const corsOptions = {
-  origin: 'https://futureblendai.com',
+  origin: ['https://futureblendai.com', 'https://futureblendai.netlify.app', 'www.futureblendai.com'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Authorization'],
   credentials: true
@@ -27,7 +27,7 @@ const io = new SocketIO(httpServer, {
   cors: corsOptions
 });
 app.use(cors({
-  origin: 'https://futureblendai.com',
+  origin:['https://futureblendai.com', 'https://futureblendai.netlify.app', 'www.futureblendai.com'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Authorization'],
   credentials: true
