@@ -18,7 +18,7 @@ const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('imag
 const app = express();
 const httpServer = createServer(app);
 const corsOptions = {
-  origin: 'https://futureblend.herokuapp.com',
+  origin: 'https://futureblendai.com',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Authorization'],
   credentials: true
@@ -27,7 +27,7 @@ const io = new SocketIO(httpServer, {
   cors: corsOptions
 });
 app.use(cors({
-  origin: 'https://futureblend.herokuapp.com',
+  origin: 'https://futureblendai.com',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Authorization'],
   credentials: true
@@ -199,7 +199,7 @@ app.post("/generate", async (req, res) => {
       const msg = await generateImage(description, imageUrls, id);
       imageRequests.delete(id);
       res.status(200).json({ message: "Image generated successfully.", msg });
-      io.emit("disconnect", "disconneted")
+      io.emit("disconnect", "disconneted");
     } catch (err) {
       res.status(500).send("Error generating the image.");
       console.log(err.message);
