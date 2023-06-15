@@ -10,20 +10,17 @@ import cors from "cors";
 import {sign, verify } from 'jsonwebtoken';
 import { appli } from "./Utlis/config";
 import fs from "fs";
-import{ createServer } from "https";
+import{ createServer } from "http";
 import { Server as SocketIO } from 'socket.io';
 import timeout from "connect-timeout";
 import { ref, getDownloadURL, uploadBytes} from "firebase/storage";
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
 const app = express();
 
-const httpsServer = createServer({
-  key: fs.readFileSync("./server.key"),
-  cert: fs.readFileSync("./server.cert")
-}, app);
+const httpsServer = createServer(app);
 
 const corsOptions = {
-  origin: '*',
+  origin: 'http://localhost:3000',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Authorization'],
   credentials: true

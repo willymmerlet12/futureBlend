@@ -55,7 +55,7 @@ export default function Tasks({ token, credits, setCredits }) {
       setLoading(true);
 
       // Socket code
-      const socket = io('https://futureblend.herokuapp.com:3002', {
+      const socket = io('https://futureblend.herokuapp.com', {
         withCredentials: true,
         extraHeaders: {
           Authorization: `Bearer ${token}`,
@@ -81,7 +81,7 @@ export default function Tasks({ token, credits, setCredits }) {
       // Perform actions when the socket is disconnected
     });
 
-      const response = await axios.post('https://futureblend.herokuapp.com/generate', formData, {
+      const response = await axios.post('http://localhost:3001/generate', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
@@ -101,7 +101,7 @@ export default function Tasks({ token, credits, setCredits }) {
 
   const fetchResults = async () => {
     try {
-      const response = await axios.get('https://futureblend.herokuapp.com/get-msg', {
+      const response = await axios.get('http://localhost:3001/get-msg', {
         headers: {
             Authorization: `Bearer ${token}`
         }
