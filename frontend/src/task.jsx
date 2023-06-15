@@ -2,37 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import io from 'socket.io-client';
-/*const socket = io("http://localhost:3002", {
-  cors: {
-    origin: 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type']
-  }
-  });
-socket.on('jobStatusUpdated', (data) => {
-  const { jobId, status, progress } = data;
-
-  // Update the UI based on the received job status and progress
-  // For example, you can update a progress bar or display the status message
-  console.log(`Job ${jobId} status updated: ${status}, Progress: ${progress}%`);
-}); */
-
-/*setInterval(() => {
-  fetch('http://localhost:3002/jobStatusUpdated', {
-    headers: {
-      Authorization: `Bearer`,
-    },
-  })
-    .then((response) => response.text())
-    .then((data) => {
-      console.log('Received server update:', data);
-      // Process the server update
-    })
-    .catch((error) => {
-      console.error('Error fetching server update:', error);
-    });
-}, 5000); */
-
 
 export default function Tasks({ token, credits, setCredits }) {
   const [previews, setPreviews] = useState([]);
@@ -86,12 +55,16 @@ export default function Tasks({ token, credits, setCredits }) {
       setLoading(true);
 
       // Socket code
-      const socket = io('https://futureblend.herokuapp.com', {
+      const socket = io('https://futureblend.herokuapp.com:3002', {
         withCredentials: true,
         extraHeaders: {
           Authorization: `Bearer ${token}`,
         },
       });
+    
+    socket.on("error", (error) => {
+      console.log("error connecting:", error);
+    })
 
     socket.on('connect', () => {
       console.log('Socket connected');

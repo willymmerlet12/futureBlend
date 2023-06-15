@@ -16,21 +16,25 @@ import timeout from "connect-timeout";
 import { ref, getDownloadURL, uploadBytes} from "firebase/storage";
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
 const app = express();
-const httpServer = createServer({
+
+const httpsServer = createServer({
   key: fs.readFileSync("./server.key"),
   cert: fs.readFileSync("./server.cert")
 }, app);
+
 const corsOptions = {
   origin: '*',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Authorization'],
   credentials: true
 };
-const io = new SocketIO(httpServer, {
+
+const io = new SocketIO(httpsServer, {
   cors: corsOptions
 });
+
 app.use(cors({
-  origin: 'https://futureblendai.com',
+  origin: 'http://localhost:3000',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Authorization'],
   credentials: true
@@ -271,6 +275,6 @@ io.on('connection', (socket) => {
   });
 });
 
-httpServer.listen(process.env.SERVER || 3002, () => {
+httpsServer.listen(process.env.SERVER || 3002, () => {
   console.log('Socket.IO server is listening on port 3002');
 });
