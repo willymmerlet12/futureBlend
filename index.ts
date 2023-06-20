@@ -131,7 +131,6 @@ async function generateImage(description: string, imageBuffer: string[], jobId: 
       return msg; // Return the response data
     } catch (err) {
       throw new Error("Error generating the image: " + err.message);
-      console.log(err.message);
     }
   }
 
@@ -155,6 +154,8 @@ app.post("/generate", async (req, res) => {
         res.status(401).send("Unauthorized");
         return;
       }
+
+      const timeoutDuration = 120000; // Adjust as needed
     
       // Retrieve the authorization token from the header
       const authToken = req.headers.authorization;
@@ -218,8 +219,9 @@ app.post("/generate", async (req, res) => {
     imageQueue.push({ id, status: 'pending', progress: 0 });
 
       console.log("akii");
+      const generateImagePromise = generateImage(description, imageUrls, id);
       
-      const msg = await generateImage(description, imageUrls, id);
+      const msg = await Promise.race([generateImagePromise, new Promise((_, reject) => setTimeout(() => reject(new Error("Image generation timed out.")), timeoutDuration))]);
       imageRequests.delete(id);
       res.status(200).json({ message: "Image generated successfully.", msg });
     } catch (err) {

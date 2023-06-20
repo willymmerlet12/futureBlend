@@ -12,6 +12,17 @@ export default function Tasks({ token, credits, setCredits }) {
   const [filesToSend, setFilesToSend] = useState([]);
   const navigate = useNavigate();
 
+  const keepAlive = () => {
+    setInterval(async () => {
+      try {
+        await axios.get('https://your-heroku-app.herokuapp.com/'); // Replace with your Heroku app's URL
+        console.log('Keep-alive request sent.');
+      } catch (error) {
+        console.error('Error sending keep-alive request:', error);
+      }
+    }, 10000); // 10 seconds interval
+  };
+
   const handleGenderChange = (event) => {
     const selectedGender = event.target.value;
     setGender(selectedGender);
@@ -50,12 +61,11 @@ export default function Tasks({ token, credits, setCredits }) {
     for (let i = 0; i < filesToSend.length; i++) {
       formData.append('images', filesToSend[i]);
     }
-
     try {
       setLoading(true);
 
       // Socket code
-      const socket = io('https://futureblend.herokuapp.com/', {
+      const socket = io('http://localhost:3001', {
         withCredentials: true,
         extraHeaders: {
           Authorization: `Bearer ${token}`,
@@ -77,7 +87,7 @@ export default function Tasks({ token, credits, setCredits }) {
       // Perform actions when the socket is disconnected
     });
 
-      const response = await axios.post('https://futureblend.herokuapp.com/generate', formData, {
+      const response = await axios.post('http://localhost:3001/generate', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
@@ -97,7 +107,7 @@ export default function Tasks({ token, credits, setCredits }) {
 
   const fetchResults = async () => {
     try {
-      const response = await axios.get('https://futureblend.herokuapp.com/get-msg', {
+      const response = await axios.get('http://localhost:3001/get-msg', {
         headers: {
             Authorization: `Bearer ${token}`
         }
