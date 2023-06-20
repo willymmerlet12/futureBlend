@@ -55,16 +55,12 @@ export default function Tasks({ token, credits, setCredits }) {
       setLoading(true);
 
       // Socket code
-      const socket = io('https://futureblend.herokuapp.com', {
+      const socket = io('http://localhost:3002', {
         withCredentials: true,
         extraHeaders: {
           Authorization: `Bearer ${token}`,
         },
       });
-    
-    socket.on("error", (error) => {
-      console.log("error connecting:", error);
-    })
 
     socket.on('connect', () => {
       console.log('Socket connected');

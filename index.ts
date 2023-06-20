@@ -68,7 +68,7 @@ const client = new Midjourney({
   ServerId: process.env.SERVER_ID || "1091356628743360562",
   ChannelId: process.env.CHANNEL_ID || "1091356628743360565",
   SalaiToken: process.env.SALAI_TOKEN || "MTA2Mzg3NTg2NDA0OTI0MjEyMg.GKwb6x.YIJMGc-feZUPLvU1rtun6lwW4rfiZDB-b-BNBY",
-  HuggingFaceToken: process.env.HUGGINGFACE_TOKEN || "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",
+  HuggingFaceToken: process.env.HUGGINGFACE_TOKEN || "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",
   Debug: true,
   Ws: true,
 });
@@ -94,9 +94,9 @@ function updateJobStatus(jobId: string, status: string, progress: number) {
 async function generateImage(description: string, imageBuffer: string[], jobId: string): Promise<any> {
     try {
       console.log("ka");
-      await client.init();
+      await client.Connect();
       console.log("boom");
-      const prompt = `${imageBuffer[0]} ${imageBuffer[1]} "the future ${description} of those 2 persons. Ultra realistic, HD, 4K"`;
+      const prompt = `${imageBuffer[0]}, ${imageBuffer[1]}, "the future ${description} of those 2 persons. Ultra realistic, HD, 4K"`;
       let progresss = 0;
       io.emit("jobStatusUpdated", "starting");
       const msg = await client.Imagine(prompt, (uri: string, progress: string) => {
@@ -147,6 +147,7 @@ app.post("/generate", async (req, res) => {
   const accessToken = authToken.split(' ')[1]; // Extract the token from the Authorization header
  
   const publicKey = fs.readFileSync('./public.key', 'utf8');
+  
   console.log(publicKey);
   verify(token, publicKey, { algorithms: ["RS256"]}, (err, decoded) => {
     if (err) {
@@ -155,6 +156,7 @@ app.post("/generate", async (req, res) => {
     } else {
       // Token verification successful
       console.log(decoded);
+      
     }
   });
 
@@ -241,7 +243,6 @@ app.get("/result/:id", async (req, res) => {
 app.listen(process.env.PORT || 3001, () => {
   console.log("Server started on port", process.env.PORT || 3001);
   console.log("hey", process.env.PORT);
-  
 });
 
 

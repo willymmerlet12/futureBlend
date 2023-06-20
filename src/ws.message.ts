@@ -1,52 +1,34 @@
-import WebSocket from "isomorphic-ws";
 import {
-  MessageConfig,
-  MessageConfigParam,
-  DefaultMessageConfig,
+  MJConfig,
   WaitMjEvent,
   MJMessage,
   LoadingHandler,
   WsEventMsg,
+  MJInfo,
+  MJSettings,
 } from "./interfaces";
-import { VerifyHuman } from "./verify.human";
 
+import { MidjourneyApi } from "./midjourne.api";
+import { formatOptions } from "./utls";
+import { VerifyHuman } from "./verify.human";
+import WebSocket from "isomorphic-ws";
 export class WsMessage {
   ws: WebSocket;
   MJBotId = "936929561302675456";
-  private zlibChunks: Buffer[] = [];
-  public config: MessageConfig;
+  private closed = false;
   private event: Array<{ event: string; callback: (message: any) => void }> =
     [];
   private waitMjEvents: Map<string, WaitMjEvent> = new Map();
   private reconnectTime: boolean[] = [];
   private heartbeatInterval = 0;
-  private DISCORD_GATEWAY: string;
 
-  constructor(defaults: MessageConfigParam) {
-    const { ChannelId, SalaiToken } = defaults;
-    if (!ChannelId || !SalaiToken) {
-      throw new Error("ChannelId and SalaiToken are required");
-    }
-
-    this.config = {
-      ...DefaultMessageConfig,
-      ...defaults,
-    };
-    this.DISCORD_GATEWAY=`${this.config.WsBaseUrl}/?v=9&encoding=json&compress=gzip-stream`
-    this.ws = new WebSocket(this.DISCORD_GATEWAY, {});
-    this.ws.on("open", this.open.bind(this));
-  }
-
-  private reconnect() {
-    //reconnect
-    this.zlibChunks = [];
-    this.ws = new WebSocket(this.DISCORD_GATEWAY);
-    this.ws.on("open", this.open.bind(this));
+  constructor(public config: MJConfig, public MJApi: MidjourneyApi) {
+    this.ws = new this.config.WebSocket(this.config.WsBaseUrl);
+    this.ws.addEventListener("open", this.open.bind(this));
   }
 
   private async heartbeat(num: number) {
     if (this.reconnectTime[num]) return;
-    if (this.ws.readyState !== WebSocket.OPEN) return;
     this.heartbeatInterval++;
     this.ws.send(
       JSON.stringify({
@@ -57,17 +39,31 @@ export class WsMessage {
     await this.timeout(1000 * 40);
     this.heartbeat(num);
   }
+  close() {
+    this.closed = true;
+    this.ws.close();
+  }
+
+  //try reconnect
+  private reconnect() {
+    if (this.closed) return;
+    // const agent = this.agent;
+    this.ws = new this.config.WebSocket(this.config.WsBaseUrl);
+    this.ws.addEventListener("open", this.open.bind(this));
+  }
   // After opening ws
   private async open() {
     const num = this.reconnectTime.length;
-    this.log("open", num);
+    this.log("open.time", num);
     this.reconnectTime.push(false);
     this.auth();
-    this.ws.on("message", this.incomingMessage.bind(this));
-    this.ws.onclose = () => {
+    this.ws.addEventListener("message", (event) => {
+      this.parseMessage(event.data as string);
+    });
+    this.ws.addEventListener("error", (event) => {
       this.reconnectTime[num] = true;
       this.reconnect();
-    };
+    });
     setTimeout(() => {
       this.heartbeat(num);
     }, 1000 * 10);
@@ -93,54 +89,80 @@ export class WsMessage {
   async timeout(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
-  private incomingMessage(data: Buffer) {
-    this.parseMessage(data);
-  }
-
   private async messageCreate(message: any) {
-    // this.log("messageCreate", message);
-    const { application_id, embeds, id, nonce } = message;
+    const { embeds, id, nonce, components, attachments } = message;
+
     if (nonce) {
       this.log("waiting start image or info or error");
       this.updateMjEventIdByNonce(id, nonce);
-      if (embeds && embeds.length > 0) {
-        if (embeds[0].color === 16711680) {
-          //error
-          const error = new Error(embeds[0].description);
-          this.EventError(id, error);
-          return;
-        } else if (embeds[0].color === 16776960) {
-          //warning
-          console.warn(embeds[0].description);
-        }
-        if (embeds[0].title.includes("continue")) {
-          if (embeds[0].description.includes("verify you're human")) {
-            //verify human
-            await this.verifyHuman(message);
+
+      if (embeds?.[0]) {
+        const { color, description, title } = embeds[0];
+        this.log("embeds[0].color", color);
+        switch (color) {
+          case 16711680: //error
+            const error = new Error(description);
+            this.EventError(id, error);
             return;
-          }
-        }
-        if (embeds[0].title.includes("Invalid")) {
-          //error
-          const error = new Error(embeds[0].description);
-          this.EventError(id, error);
-          return;
+
+          case 16776960: //warning
+            console.warn(description);
+            break;
+
+          default:
+            if (
+              title?.includes("continue") &&
+              description?.includes("verify you're human")
+            ) {
+              //verify human
+              await this.verifyHuman(message);
+              return;
+            }
+
+            if (title?.includes("Invalid")) {
+              //error
+              const error = new Error(description);
+              this.EventError(id, error);
+              return;
+            }
         }
       }
     }
-    //done image
-    if (!nonce && !application_id) {
-      this.log("done image");
+
+    if (!nonce && attachments?.length > 0 && components?.length > 0) {
       this.done(message);
       return;
     }
-    this.processingImage(message);
+
+    this.messageUpdate(message);
   }
   private messageUpdate(message: any) {
-    this.processingImage(message);
+    const { content, embeds, interaction = {}, nonce, id } = message;
+
+    if (!nonce) {
+      const { name } = interaction;
+
+      switch (name) {
+        case "settings":
+          this.emit("settings", message);
+          return;
+        case "describe":
+          this.emitDescribe(id, embeds?.[0]?.description);
+          break;
+        case "info":
+          this.emit("info", embeds?.[0]?.description);
+          return;
+      }
+    }
+    if (content) {
+      this.processingImage(message);
+    }
   }
   private processingImage(message: any) {
-    const { content, id, nonce, attachments } = message;
+    const { content, id, attachments, flags } = message;
+    if (!content) {
+      return;
+    }
     const event = this.getEventById(id);
     if (!event) {
       return;
@@ -148,12 +170,12 @@ export class WsMessage {
     event.prompt = content;
     //not image
     if (!attachments || attachments.length === 0) {
-      // this.log("no image waiting", { id, nonce, content, event });
       return;
     }
     const MJmsg: MJMessage = {
       uri: attachments[0].url,
       content: content,
+      flags: flags,
       progress: this.content2progress(content),
     };
     const eventMsg: WsEventMsg = {
@@ -163,30 +185,19 @@ export class WsMessage {
   }
 
   // parse message from ws
-  private parseMessage(data: Buffer) {
-    var jsonString = data.toString();
-    const msg = JSON.parse(jsonString);
+  private parseMessage(data: string) {
+    const msg = JSON.parse(data);
     if (msg.t === null || msg.t === "READY_SUPPLEMENTAL") return;
     if (msg.t === "READY") {
       this.emit("ready", null);
       return;
     }
     if (!(msg.t === "MESSAGE_CREATE" || msg.t === "MESSAGE_UPDATE")) return;
-
     const message = msg.d;
-    const {
-      channel_id,
-      content,
-      application_id,
-      embeds,
-      id,
-      nonce,
-      author,
-      attachments,
-    } = message;
+    const { channel_id, content, id, nonce, author } = message;
     if (!(author && author.id === this.MJBotId)) return;
     if (channel_id !== this.config.ChannelId) return;
-    this.log("has message", content, nonce, id);
+    this.log("has message", msg.t, content, nonce, id);
 
     if (msg.t === "MESSAGE_CREATE") {
       this.messageCreate(message);
@@ -203,66 +214,22 @@ export class WsMessage {
       this.log("HuggingFaceToken is empty");
       return;
     }
-    const { embeds, components } = message;
+    const { embeds, components, id, flags } = message;
     const uri = embeds[0].image.url;
     const categories = components[0].components;
     const classify = categories.map((c: any) => c.label);
-    const verifyClient = new VerifyHuman(HuggingFaceToken);
+    const verifyClient = new VerifyHuman(this.config);
     const category = await verifyClient.verify(uri, classify);
     if (category) {
       const custom_id = categories.find(
         (c: any) => c.label === category
       ).custom_id;
-      const httpStatus = await this.verifyHumanApi(custom_id, message.id);
+      const httpStatus = await this.MJApi.CustomApi({
+        msgId: id,
+        customId: custom_id,
+        flags,
+      });
       this.log("verifyHumanApi", httpStatus, custom_id, message.id);
-      // this.log("verify success", category);
-    }
-  }
-  private async verifyHumanApi(
-    custom_id: string,
-    message_id: string,
-    nonce?: string
-  ) {
-    const payload = {
-      type: 3,
-      nonce,
-      guild_id: this.config.ServerId,
-      channel_id: this.config.ChannelId,
-      message_flags: 64,
-      message_id,
-      application_id: "936929561302675456",
-      session_id: this.config.SessionId,
-      data: {
-        component_type: 2,
-        custom_id,
-      },
-    };
-    return this.interactions(payload);
-  }
-  protected async interactions(
-    payload: any,
-    callback?: (result: number) => void
-  ) {
-    try {
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: this.config.SalaiToken,
-      };
-      const response = await fetch(`${this.config.DiscordBaseUrl}/api/v9/interactions`,{
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: headers,
-        },
-      );
-      callback && callback(response.status);
-      //discord api rate limit
-      if (response.status >= 400) {
-        this.log("error config", { config: this.config });
-      }
-      return response.status;
-    } catch (error) {
-      console.log(error);
-      callback && callback(500);
     }
   }
   private EventError(id: string, error: Error) {
@@ -277,19 +244,26 @@ export class WsMessage {
   }
 
   private done(message: any) {
-    const { content, id, attachments } = message;
+    const { content, id, attachments, components, flags } = message;
     const MJmsg: MJMessage = {
       id,
+      flags,
+      content,
       hash: this.uriToHash(attachments[0].url),
       progress: "done",
       uri: attachments[0].url,
-      content: content,
+      options: formatOptions(components),
     };
     this.filterMessages(MJmsg);
     return;
   }
 
   protected content2progress(content: string) {
+    const spcon = content.split("**");
+    if (spcon.length < 3) {
+      return "";
+    }
+    content = spcon[2];
     const regex = /\(([^)]+)\)/; // matches the value inside the first parenthesis
     const match = content.match(regex);
     let progress = "";
@@ -307,7 +281,7 @@ export class WsMessage {
       return matches[1]; // Get the matched content
     } else {
       this.log("No match found.", content);
-      return "";
+      return content;
     }
   }
 
@@ -358,7 +332,14 @@ export class WsMessage {
       .filter((e) => e.event === event)
       .forEach((e) => e.callback(message));
   }
-
+  private emitImage(type: string, message: WsEventMsg) {
+    this.emit(type, message);
+  }
+  private emitDescribe(id: string, data: any) {
+    const event = this.getEventById(id);
+    if (!event) return;
+    this.emit(event.nonce, data);
+  }
   on(event: string, callback: (message: any) => void) {
     this.event.push({ event, callback });
   }
@@ -384,24 +365,33 @@ export class WsMessage {
     };
     this.event.push({ event: "info", callback: once });
   }
+  onceSettings(callback: (message: any) => void) {
+    const once = (message: any) => {
+      this.remove("settings", once);
+      callback(message);
+    };
+    this.event.push({ event: "settings", callback: once });
+  }
+  onceDescribe(nonce: string, callback: (data: any) => void) {
+    const once = (message: any) => {
+      this.remove(nonce, once);
+      this.removeWaitMjEvent(nonce);
+      callback(message);
+    };
+    this.waitMjEvents.set(nonce, { nonce });
+    this.event.push({ event: nonce, callback: once });
+  }
+
   removeInfo(callback: (message: any) => void) {
     this.remove("info", callback);
   }
   private removeWaitMjEvent(nonce: string) {
     this.waitMjEvents.delete(nonce);
   }
-
-  private emitImage(type: string, message: WsEventMsg) {
-    this.emit(type, message);
-  }
   onceImage(nonce: string, callback: (data: WsEventMsg) => void) {
     const once = (data: WsEventMsg) => {
       const { message, error } = data;
-      if (message) {
-        // message.content = this.content2prompt(message.content);
-      }
       if (error || (message && message.progress === "done")) {
-        // this.log("onceImage", type, "done", data, error);
         this.remove(nonce, once);
         this.removeWaitMjEvent(nonce);
       }
@@ -411,7 +401,7 @@ export class WsMessage {
     this.event.push({ event: nonce, callback: once });
   }
 
-  async waitMessage(nonce: string, loading?: LoadingHandler) {
+  async waitImageMessage(nonce: string, loading?: LoadingHandler) {
     return new Promise<MJMessage | null>((resolve, reject) => {
       this.onceImage(nonce, ({ message, error }) => {
         if (error) {
@@ -425,5 +415,87 @@ export class WsMessage {
         message && loading && loading(message.uri, message.progress || "");
       });
     });
+  }
+
+  async waitDescribe(nonce: string) {
+    return new Promise<string[] | null>((resolve) => {
+      this.onceDescribe(nonce, (message) => {
+        const data = message.split("\n\n");
+        resolve(data);
+      });
+    });
+  }
+
+  async waitInfo() {
+    return new Promise<MJInfo | null>((resolve, reject) => {
+      this.onceInfo((message) => {
+        resolve(this.msg2Info(message));
+      });
+    });
+  }
+  async waitSettings() {
+    return new Promise<MJSettings | null>((resolve, reject) => {
+      this.onceSettings((message) => {
+        resolve({
+          id: message.id,
+          flags: message.flags,
+          content: message,
+          options: formatOptions(message.components),
+        });
+      });
+    });
+  }
+
+  msg2Info(msg: string) {
+    let jsonResult: MJInfo = {
+      subscription: "",
+      jobMode: "",
+      visibilityMode: "",
+      fastTimeRemaining: "",
+      lifetimeUsage: "",
+      relaxedUsage: "",
+      queuedJobsFast: "",
+      queuedJobsRelax: "",
+      runningJobs: "",
+    }; // Initialize jsonResult with empty object
+    msg.split("\n").forEach(function (line) {
+      const colonIndex = line.indexOf(":");
+      if (colonIndex > -1) {
+        const key = line.substring(0, colonIndex).trim().replaceAll("**", "");
+        const value = line.substring(colonIndex + 1).trim();
+        switch (key) {
+          case "Subscription":
+            jsonResult.subscription = value;
+            break;
+          case "Job Mode":
+            jsonResult.jobMode = value;
+            break;
+          case "Visibility Mode":
+            jsonResult.visibilityMode = value;
+            break;
+          case "Fast Time Remaining":
+            jsonResult.fastTimeRemaining = value;
+            break;
+          case "Lifetime Usage":
+            jsonResult.lifetimeUsage = value;
+            break;
+          case "Relaxed Usage":
+            jsonResult.relaxedUsage = value;
+            break;
+          case "Queued Jobs (fast)":
+            jsonResult.queuedJobsFast = value;
+            break;
+          case "Queued Jobs (relax)":
+            jsonResult.queuedJobsRelax = value;
+            break;
+          case "Running Jobs":
+            jsonResult.runningJobs = value;
+            break;
+          default:
+          // Do nothing
+        }
+      }
+    });
+    return jsonResult;
   }
 }

@@ -1,19 +1,26 @@
-export interface MessageConfig {
+import { WebSocket } from "isomorphic-ws";
+
+export type FetchFn = typeof fetch;
+export type WebSocketCl = typeof WebSocket;
+
+export interface MJConfig {
   ChannelId: string;
   SalaiToken: string;
   Debug: boolean;
   Limit: number;
   MaxWait: number;
-  ServerId: string;
   SessionId: string;
+  ServerId?: string;
   Ws?: boolean;
   HuggingFaceToken?: string;
-  DiscordBaseUrl?: string;
-  WsBaseUrl?: string;
+  DiscordBaseUrl: string;
+  WsBaseUrl: string;
+  fetch: FetchFn;
+  WebSocket: WebSocketCl;
 }
-export interface MessageConfigParam {
-  ChannelId: string;
+export interface MJConfigParam {
   SalaiToken: string;
+  ChannelId?: string;
   Debug?: boolean;
   Limit?: number;
   MaxWait?: number;
@@ -23,29 +30,20 @@ export interface MessageConfigParam {
   SessionId?: string;
   DiscordBaseUrl?: string;
   WsBaseUrl?: string;
-}
-export interface MidjourneyConfig extends MessageConfig {
-  ServerId: string;
-  SessionId: string;
+  fetch?: FetchFn;
+  WebSocket?: WebSocketCl;
 }
 
-export interface MidjourneyConfigParam extends MessageConfigParam {
-  ServerId: string;
-  SessionId?: string;
-}
-export const DefaultMessageConfig: MessageConfig = {
-  ChannelId: "",
+export const DefaultMJConfig: MJConfig = {
+  ChannelId: "1077800642086703114",
   SalaiToken: "",
-  ServerId: "",
-  SessionId: "",
+  SessionId: "8bb7f5b79c7a49f7d0824ab4b8773a81",
   Debug: false,
   Limit: 50,
-  MaxWait: 100,
+  Ws: true,
+  MaxWait: 200,
   DiscordBaseUrl: "https://discord.com",
-  WsBaseUrl: "wss://gateway.discord.gg"
-};
-export const DefaultMidjourneyConfig: MidjourneyConfig = {
-  ...DefaultMessageConfig,
-  ServerId: "",
-  SessionId: "8bb7f5b79c7a49f7d0824ab4b8773a81",
+  WsBaseUrl: "wss://gateway.discord.gg?v=9&encoding=json&compress=gzip-stream",
+  fetch: fetch,
+  WebSocket: WebSocket,
 };
