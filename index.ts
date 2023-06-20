@@ -4,37 +4,49 @@ import express from "express";
 import { Midjourney } from "./src";
 import bodyParser from "body-parser";
 import multer from "multer";
+import path from 'path'
 import { v4 as uuidv4 } from 'uuid';
 import authMiddleware from "./auth-middleware";
 import cors from "cors";
 import {sign, verify } from 'jsonwebtoken';
 import { appli } from "./Utlis/config";
 import fs from "fs";
-import{ createServer } from "https";
+import{ createServer } from "http";
 import { Server as SocketIO } from 'socket.io';
-import timeout from "connect-timeout";
+import { fileURLToPath } from 'url';
 import { ref, getDownloadURL, uploadBytes} from "firebase/storage";
+
+const PORT = process.env.PORT || 3001; 
+
+const HOST = PORT === 3001 
+                ? 'localhost'
+                : '0.0.0.0'
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const uploadMiddleware = multer({ storage: multer.memoryStorage() }).array('images', 2);
+
 const app = express();
 
 const serverKey = fs.readFileSync("./server.key", "utf8");
 const certificate = fs.readFileSync("./server.cert", "utf8");
 
-const httpsServer = createServer({
-  key: serverKey,
-  cert: certificate
-}, app);
+const httpsServer = createServer(app);
 
 const corsOptions = {
-  origin: 'https://futureblend.herokuapp.com/',
+  origin: 'https://futureblendai.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTION'],
   allowedHeaders: ['Authorization'],
   credentials: true
 };
 
 const io = new SocketIO(httpsServer, {
-  cors: corsOptions
-});
+  cors: {
+      origin: "https://futureblendai.com",
+      credentials: true,
+  }
+})
 
 app.use(cors({
   origin: 'https://futureblendai.com',
@@ -52,7 +64,7 @@ app.use(authMiddleware.decodeToken);
 
 //ERROR HANDLING
 app.use(function(err, req, res, next) {
-  if(!err) return next(); // you also need this line
+  if(!err) return next(); 
   console.log(err);
   let returnObj = {
     statusCode:err['statusCode'],
@@ -62,8 +74,6 @@ app.use(function(err, req, res, next) {
   res.send(returnObj);
 });
 
-
-const domain = "https://futureblendai.com";
 const payload = { userId: '4526821' };
 const secretKey = 'letssee';
 const privateKey = fs.readFileSync('./private.key', 'utf8');
@@ -246,39 +256,38 @@ app.get("/result/:id", async (req, res) => {
  
 
 
-app.listen(process.env.PORT || 3001, () => {
-  console.log("Server started on port", process.env.PORT || 3001);
-  console.log("hey", process.env.PORT);
-});
+  httpsServer.listen(PORT,  ()  => {
+    console.log(`[INFO] Server listening on port ${PORT}`)
+    socket({io})
+})
 
-
-
-io.on('connection', (socket) => {
-  console.log('A client connected');
-
-  // Handle events from the client
-  socket.on('someEvent', (data) => {
-    console.log('Received data:', data);
-    // Perform actions based on the received data
+export const socket = async ({io}) => {
+  io.on('connection', (socket) => {
+    console.log('A client connected');
+  
+    // Handle events from the client
+    socket.on('someEvent', (data) => {
+      console.log('Received data:', data);
+      // Perform actions based on the received data
+    });
+  
+    // Send updates to the client
+    setInterval(() => {
+      const message = 'This is a server update';
+      socket.emit('serverUpdate', message);
+    }, 5000);
+  
+    socket.on('jobStatusUpdated', (data) => {
+      console.log('Received job status update from client:', data);
+      // Perform actions based on the received job status update
+    });
+  
+    // Handle disconnection
+    socket.on('disconnect', () => {
+      console.log('A client disconnected');
+    });
   });
+}
 
-  // Send updates to the client
-  setInterval(() => {
-    const message = 'This is a server update';
-    socket.emit('serverUpdate', message);
-  }, 5000);
 
-  socket.on('jobStatusUpdated', (data) => {
-    console.log('Received job status update from client:', data);
-    // Perform actions based on the received job status update
-  });
-
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log('A client disconnected');
-  });
-});
-
-httpsServer.listen(process.env.SERVER || 3002, () => {
-  console.log('Socket.IO server is listening on port 3002');
-});
+app.use(express.static(path.join(__dirname, "/public")));
