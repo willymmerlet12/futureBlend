@@ -55,7 +55,7 @@ export default function Tasks({ token, credits, setCredits }) {
       setLoading(true);
 
       // Socket code
-      const socket = io('ws://futureblend.herokuapp.com:80', {
+      const socket = io('https://futureblend.herokuapp.com/', {
         withCredentials: true,
         extraHeaders: {
           Authorization: `Bearer ${token}`,

@@ -26,7 +26,7 @@ const httpsServer = createServer({
 }, app);
 
 const corsOptions = {
-  origin: 'https://futureblendai.com',
+  origin: 'https://futureblend.herokuapp.com/',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTION'],
   allowedHeaders: ['Authorization'],
   credentials: true
