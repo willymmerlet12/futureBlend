@@ -20,8 +20,8 @@ const app = express();
 const httpsServer = createServer(app);
 
 const corsOptions = {
-  origin: 'http://localhost:3000',
-  methods: ['GET', 'POST'],
+  origin: 'https://futureblendai.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTION'],
   allowedHeaders: ['Authorization'],
   credentials: true
 };
@@ -31,7 +31,7 @@ const io = new SocketIO(httpsServer, {
 });
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'https://futureblendai.com',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Authorization'],
   credentials: true
