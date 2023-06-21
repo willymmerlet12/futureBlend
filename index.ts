@@ -48,13 +48,12 @@ const io = new SocketIO(httpsServer, {
   }
 })
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://futureblendai.com');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  next();
-});
+app.use(cors({
+  origin: 'https://futureblendai.com',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Authorization'],
+  credentials: true
+}));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -62,59 +61,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 app.use(authMiddleware.decodeToken);
-
-const extendTimeoutMiddleware = (req, res, next) => {
-  const space = ' ';
-  let isFinished = false;
-  let isDataSent = false;
-
-  // Only extend the timeout for API requests
-  if (!req.url.includes('/api')) {
-    next();
-    return;
-  }
-
-  res.once('finish', () => {
-    isFinished = true;
-  });
-
-  res.once('end', () => {
-    isFinished = true;
-  });
-
-  res.once('close', () => {
-    isFinished = true;
-  });
-
-  res.on('data', (data) => {
-    // Look for something other than our blank space to indicate that real
-    // data is now being sent back to the client.
-    if (data !== space) {
-      isDataSent = true;
-    }
-  });
-
-  const waitAndSend = () => {
-    setTimeout(() => {
-      // If the response hasn't finished and hasn't sent any data back....
-      if (!isFinished && !isDataSent) {
-        // Need to write the status code/headers if they haven't been sent yet.
-        if (!res.headersSent) {
-          res.writeHead(202);
-        }
-
-        res.write(space);
-
-        // Wait another 15 seconds
-        waitAndSend();
-      }
-    }, 15000);
-  };
-
-  waitAndSend();
-  next();
-};
-
 
 //ERROR HANDLING
 app.use(function(err, req, res, next) {
@@ -127,6 +73,59 @@ app.use(function(err, req, res, next) {
   res.status(err['statusCode']);
   res.send(returnObj);
 });
+
+const extendTimeoutMiddleware = (req, res, next) => {
+  // Only extend the timeout for the /generate route
+  if (req.url !== '/generate') {
+    next();
+    return;
+  }
+
+  const space = ' ';
+  let isDataSent = false;
+
+  res.once('finish', () => {
+    isDataSent = true;
+  });
+
+  res.once('end', () => {
+    isDataSent = true;
+  });
+
+  res.once('close', () => {
+    isDataSent = true;
+  });
+
+  res.on('data', (data) => {
+    // Look for something other than our blank space to indicate that real
+    // data is now being sent back to the client.
+    if (data !== space) {
+      console.log("receiving data");
+      isDataSent = true;
+    }
+  });
+
+  const waitAndSend = () => {
+    setTimeout(() => {
+      // If the response hasn't sent any data back....
+      if (!isDataSent) {
+        console.log("whitespace");
+
+        // Write the whitespace to the response
+        res.write(space);
+
+        // Wait another 15 seconds
+        waitAndSend();
+      }
+    }, 15000);
+  };
+
+  waitAndSend();
+  next();
+};
+
+app.use(extendTimeoutMiddleware);
+
 
 const payload = { userId: '4526821' };
 const secretKey = 'letssee';
@@ -184,6 +183,7 @@ async function generateImage(description: string, imageBuffer: string[], jobId: 
       return msg; // Return the response data
     } catch (err) {
       throw new Error("Error generating the image: " + err.message);
+      console.log(err.message);
     }
   }
 
@@ -201,14 +201,12 @@ app.get("/get-msg", (req, res) => {
     }
   });
 
-app.post("/generate", extendTimeoutMiddleware, async (req, res) => {
+app.post("/generate", async (req, res) => {
 
     if (!req.headers.authorization) {
         res.status(401).send("Unauthorized");
         return;
       }
-
-      const timeoutDuration = 120000; // Adjust as needed
     
       // Retrieve the authorization token from the header
       const authToken = req.headers.authorization;
@@ -272,14 +270,21 @@ app.post("/generate", extendTimeoutMiddleware, async (req, res) => {
     imageQueue.push({ id, status: 'pending', progress: 0 });
 
       console.log("akii");
-      const generateImagePromise = generateImage(description, imageUrls, id);
       
-      const msg = await Promise.race([generateImagePromise, new Promise((_, reject) => setTimeout(() => reject(new Error("Image generation timed out.")), timeoutDuration))]);
+      const msg = await generateImage(description, imageUrls, id);
       imageRequests.delete(id);
-      res.status(200).json({ message: "Image generated successfully.", msg });
+      if (!res.headersSent) {
+        res.status(200).json({ message: "Image generated successfully.", msg });
+      }
     } catch (err) {
-      res.status(500).send("Error generating the image.");
-      console.log(err.message);
+      if (!res.headersSent) {
+        res.status(500).send("Error generating the image.");
+        console.log(err.message);
+      } else {
+        console.log("Response headers already sent.");
+      } 
+    } finally {
+      res.end(); // Ensure the response is terminated
     }
  });
 });
