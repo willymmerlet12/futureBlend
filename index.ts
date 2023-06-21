@@ -336,8 +336,8 @@ app.get("/result/:id", async (req, res) => {
           },
         ],
         mode: 'payment',
-        success_url: `https://futureblend.herokuapp.com/generate`,
-        cancel_url: `https://futureblend.herokuapp.com/cancel`,
+        success_url: `https://futureblendai.com/generate`,
+        cancel_url: `https://futureblendai.com/cancel`,
       });
   
       res.json({ sessionId: session.id });

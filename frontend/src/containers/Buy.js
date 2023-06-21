@@ -31,8 +31,8 @@ const Buy = ({ token }) => {
       const result = await stripe.redirectToCheckout({
         sessionId: session.id,
         lineItems: [{ price: priceId, quantity: 1 }],
-        successUrl: `https://futureblend.herokuapp.com/generate`,
-        cancelUrl: "https://futureblend.herokuapp.com/",
+        successUrl: `https://futureblendai.com/generate`,
+        cancelUrl: "https://futureblendai.com/",
         mode: "payment",
       });
 
