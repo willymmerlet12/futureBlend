@@ -12,6 +12,7 @@ import {sign, verify } from 'jsonwebtoken';
 import { appli } from "./Utlis/config";
 import fs from "fs";
 import{ createServer } from "http";
+import Stripe from "stripe";
 import { Server as SocketIO } from 'socket.io';
 import { fileURLToPath } from 'url';
 import { ref, getDownloadURL, uploadBytes} from "firebase/storage";
@@ -125,6 +126,10 @@ const extendTimeoutMiddleware = (req, res, next) => {
 };
 
 app.use(extendTimeoutMiddleware);
+
+const stripe = new Stripe(`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`, {
+  apiVersion: "2022-11-15"
+})
 
 
 const payload = { userId: '4526821' };
@@ -311,6 +316,34 @@ app.get("/result/:id", async (req, res) => {
       }
     } else {
       res.status(404).send("Image generation request not found.");
+    }
+  });
+
+  app.post('/create-checkout-session', async (req, res) => {
+    const {  priceId } = req.body;
+  
+    try {
+      // Retrieve the product price from Stripe
+      const price = await stripe.prices.retrieve(priceId);
+  
+      // Create a new checkout session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: price.id,
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `https://futureblend.herokuapp.com/generate`,
+        cancel_url: `https://futureblend.herokuapp.com/cancel`,
+      });
+  
+      res.json({ sessionId: session.id });
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      res.status(500).send('An error occurred while creating the checkout session.');
     }
   });
 
