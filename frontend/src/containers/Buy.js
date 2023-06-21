@@ -8,7 +8,7 @@ const stripePromise = loadStripe(
   "pk_live_51NGmWwDI1bwWeEay08ePMQavGqJMbMbJYFeWMxreO32aJ1HRK62muH2FhIXnMzVYSYPiTRCAxWWtO9lzbuic3j8F00lKIzpFur"
 );
 
-const Buy = () => {
+const Buy = ({ token }) => {
   const handleCheckout = async (priceId) => {
     try {
       const stripe = await stripePromise;
@@ -19,6 +19,7 @@ const Buy = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ priceId }),
         }

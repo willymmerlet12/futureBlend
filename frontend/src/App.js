@@ -28,7 +28,10 @@ function App() {
         <Route path="/cookies" element={<Cookies />} />
         <Route path="/cancel" element={<Cancel />} />
         <Route path="/success" element={<Success />} />
-        <Route path="/buy" element={<Buy />} />
+        <Route
+          path="/buy"
+          element={<Buy token={sessionStorage.getItem("accessToken")} />}
+        />
         <Route
           path="/results"
           element={<Results credits={credits} setCredits={setCredits} />}
